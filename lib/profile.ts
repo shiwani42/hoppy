@@ -18,6 +18,7 @@ export type Profile = {
   stage_changed_at: string | null;
   start_weight_kg: number | null;
   milestones: { stage?: number; weight?: number; streak?: number };
+  timezone: string;
   created_at: string;
 };
 

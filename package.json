@@ -12,7 +12,9 @@
     "typecheck": "next typegen && tsc --noEmit",
     "db:start": "supabase start",
     "db:reset": "supabase db reset",
-    "icons": "node scripts/make-icons.mjs"
+    "icons": "node scripts/make-icons.mjs",
+    "cron:setup": "node scripts/setup-cron.mjs",
+    "seed:days": "node scripts/seed-days.mjs"
   },
   "dependencies": {
     "@google/genai": "^2.31.0",

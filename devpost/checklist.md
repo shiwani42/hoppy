@@ -109,7 +109,7 @@ Build mode: fast (learner asked to finish everything end to end locally before t
   Learner check: Look at the milestone card for a 7-day streak. Does it feel like an achievement worth posting?
   Commit: `Streaks and milestone share cards`
 
-- [ ] **11. Track medicines and supplements**
+- [x] **11. Track medicines and supplements**
   Becomes usable: Add a medicine or supplement with dose and times; today's due items show and can be checked off.
   Why now: An independent Tier 2 feature; reminders (next slice) build on its schedule.
   PRD ref: `prd.md > Medicines and Supplements`
@@ -196,3 +196,5 @@ Activity mode:
 - Strength uses moderate-equivalent minutes = MET-minutes ÷ 4, consistent with WHO 2020's ~600 MET-min/week. Vigorous exercise counts about double (as the spec said), and gentle hatha yoga (2.5 MET) earns partial credit instead of none, which matters for a yoga-heavy audience.
 - Common chat questions (protein, fibre, calories, water, sleep, workouts, "can I have X?", "what should I eat?", medical deferral) are answered by a free local engine (`lib/chat/answer.ts`) from the user's real numbers. GLM writes the reply when its key is set. Either way, the same engine supplies the big-number stat card and the "Hoppy suggested food" signal that triggers the diet drip question.
 - Product refinements found while verifying: (1) food suggestions are ranked by protein or fibre **per calorie** and are vegetarian until the diet is known, after an early version suggested chole bhature and mutton curry; (2) on the signup day, nudges wait for the first log; (3) concurrent refreshes can't double-save a nudge.
+- Push verification: the sending side (VAPID signing, aes128gcm encryption, 201 accepted, 410 → subscription removed, one send per reminder per day, skip logged meals and taken doses) was verified against a local HTTPS mock push service. The real `pg_cron` → `pg_net` → `/api/cron/reminders` loop was observed running every 5 minutes. Headless Chrome cannot register with a real browser push service (it hangs, and is unsupported in incognito), so **receiving a notification on a real device is the learner check**.
+- Turning on reminders now always creates the meal reminders, and a push-service failure shows its own honest message. Previously a failed subscribe was reported as "blocked" and left nothing for the in-app fallback to remind about.

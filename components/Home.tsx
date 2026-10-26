@@ -18,7 +18,9 @@ import { QuickLog } from "@/components/QuickLog";
 import { Tumbler } from "@/components/Tumbler";
 import { loadAvatarStages, type AvatarStage } from "@/lib/avatar/client";
 import { askHoppy, loadChat, saveNudge, type ChatMsg } from "@/lib/chat/client";
-import { NOT_FOOD, NUDGES, nudgeKeyOf, pick } from "@/lib/copy/voice";
+import { MEAL_REMINDERS, NOT_FOOD, NUDGES, nudgeKeyOf, pick } from "@/lib/copy/voice";
+import { hasPushSubscription } from "@/lib/push/client";
+import { loadReminders, missedMeal } from "@/lib/reminders/client";
 import { greeting } from "@/lib/greeting";
 import { resizeImage } from "@/lib/image";
 import { addWater, deleteActivity, saveActivity, saveSleep, saveWeight, undoLastWater, type SavedActivity } from "@/lib/logs/client";
@@ -65,6 +67,7 @@ export function Home() {
   const [celebrate, setCelebrate] = useState<number | null>(null);
   const [streakDays, setStreakDays] = useState(0);
   const [milestone, setMilestone] = useState<Milestone | null>(null);
+  const [reminder, setReminder] = useState<keyof typeof MEAL_REMINDERS | null>(null);
   const avatar = profile ? (stages[profile.current_stage] ?? stages[1] ?? null) : null;
   const [today, setToday] = useState<Today | null>(null);
   const meals = today?.meals ?? [];
@@ -147,6 +150,38 @@ export function Home() {
     return p;
   }, []);
 
+  /**
+   * In-app reminder (prd.md > Reminders): when a notification was tapped
+   * (/?log=lunch), or when push isn't on and a meal reminder passed unlogged.
+   */
+  async function showReminder(t: Today) {
+    const logged = new Set(t.meals.map((m) => m.meal_type));
+    const fromLink = new URLSearchParams(window.location.search).get("log");
+    if (fromLink && fromLink in MEAL_REMINDERS && !logged.has(fromLink as MealType)) {
+      setReminder(fromLink as keyof typeof MEAL_REMINDERS);
+      window.history.replaceState(null, "", "/");
+      return;
+    }
+    if (await hasPushSubscription()) return;
+    const now = new Date();
+    const hm = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+    const missed = missedMeal(await loadReminders(), hm, logged);
+    let dismissed = false;
+    try {
+      dismissed = !!missed && sessionStorage.getItem(`hoppy:dismissed:${t.date}:${missed.meal_type}`) === "1";
+    } catch {}
+    if (missed && !dismissed) setReminder(missed.meal_type);
+  }
+
+  function dismissReminder() {
+    if (reminder && today) {
+      try {
+        sessionStorage.setItem(`hoppy:dismissed:${today.date}:${reminder}`, "1");
+      } catch {}
+    }
+    setReminder(null);
+  }
+
   async function markMilestone(m: Milestone) {
     if (!profile) return;
     setProfile(await saveProfile({ milestones: { ...profile.milestones, [m.type]: m.value } }));
@@ -169,6 +204,9 @@ export function Home() {
       // Stages 2–5 may still be generating in the background after onboarding.
       if (Object.keys(stages).length < 5) setTimeout(async () => setStages(await loadAvatarStages()), 8000);
       if (!maybeAsk(p, "app_open")) maybeAsk(p, "morning", t);
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (tz && p.timezone !== tz) setProfile(await saveProfile({ timezone: tz }));
+      await showReminder(t);
       fetch("/api/capabilities").then((r) => r.json()).then((c) => setServerVoice(!!c.gemini)).catch(() => {});
     })().catch(console.error);
   }, [router, refresh, maybeAsk, checkStage]);
@@ -374,6 +412,12 @@ export function Home() {
       </header>
 
       <section className="mt-6 flex flex-col gap-4 pb-4" aria-label="Today">
+        {reminder && !meals.some((m) => m.meal_type === reminder) && (
+          <div role="status" data-testid="reminder" className="flex items-center gap-3 rounded-[1.75rem] bg-teal-soft p-4 shadow-sm animate-fade-up">
+            <p className="flex-1 font-display text-lg leading-snug">{MEAL_REMINDERS[reminder]}</p>
+            <button onClick={dismissReminder} aria-label="Dismiss reminder" className="h-10 w-10 rounded-full text-ink-soft">✕</button>
+          </div>
+        )}
         {milestone && (
           <div className="rounded-[1.75rem] bg-gradient-to-br from-turmeric/25 to-teal-soft p-4 shadow-sm animate-pop" role="status" data-testid="milestone">
             <p className="font-display text-xl font-bold">

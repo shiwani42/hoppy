@@ -28,3 +28,10 @@ export const NUDGES = {
 export function nudgeKeyOf(line: string): keyof typeof NUDGES | "" {
   return (Object.keys(NUDGES) as (keyof typeof NUDGES)[]).find((k) => (NUDGES[k] as readonly string[]).includes(line)) ?? "";
 }
+
+export const MEAL_REMINDERS = {
+  breakfast: "Good morning! What's for nashta? Snap it 📸",
+  lunch: "Lunch? Snap it, or just tell me 🍛",
+  snack: "Snack time? Tell me what you had 🍌",
+  dinner: "Dinner time! Snap your plate 🍽️",
+} as const;

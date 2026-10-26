@@ -28,6 +28,14 @@ npm run dev:https         # self-signed HTTPS on all interfaces
 
 Open `https://<your-laptop-ip>:3000` on the phone and accept the certificate warning. The camera, install and push notifications need HTTPS.
 
+### Reminders (push notifications)
+
+```bash
+npm run cron:setup        # schedules the every-5-minutes reminder job in local Supabase
+```
+
+Then open Settings → Turn on reminders. In the cloud, run `node scripts/setup-cron.mjs https://<your-app>` once.
+
 ### Tests
 
 ```bash
