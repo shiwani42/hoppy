@@ -1,5 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import sharp from "sharp";
 import { generateTwinGemini } from "@/lib/ai/gemini";
 import { generateTwinOpenAI, type ImageRef } from "@/lib/ai/openai";
 import { avatarPrompt, isTall, posePrompt, type Pose } from "@/lib/ai/prompts";
@@ -41,7 +42,7 @@ async function loadOwnTwin(sb: SupabaseClient, userId: string): Promise<ImageRef
   const { data } = await sb.from("avatar_poses").select("image_path, is_placeholder").eq("user_id", userId).eq("pose", "bust").maybeSingle();
   if (!data || data.is_placeholder) return null;
   const file = await sb.storage.from("avatars").download(data.image_path);
-  return file.data ? { bytes: Buffer.from(await file.data.arrayBuffer()), mimeType: "image/png" } : null;
+  return file.data ? { bytes: Buffer.from(await file.data.arrayBuffer()), mimeType: file.data.type || "image/webp" } : null;
 }
 
 /**
@@ -122,5 +123,8 @@ async function tryTwin(sb: SupabaseClient, selfie: Selfie | null, ownTwin: Image
   }
   if (!png) return null;
   // OpenAI returns a transparent background; Gemini can't, so cut it out.
-  return { body: (await isCutOut(png)) ? png : await cutout(png), type: "image/png", ext: "png", placeholder: false };
+  const clear = (await isCutOut(png)) ? png : await cutout(png);
+  // A 1024px PNG is ~2 MB; WebP with alpha at phone size is a few hundred KB.
+  const body = await sharp(clear).resize({ width: 768, height: 1152, fit: "inside", withoutEnlargement: true }).webp({ quality: 86, alphaQuality: 90 }).toBuffer();
+  return { body, type: "image/webp", ext: "webp", placeholder: false };
 }

@@ -46,7 +46,7 @@ export async function generateTwinOpenAI(refs: ImageRef[], prompt: string, opts:
   if (!hasKey.openai()) return null;
   const model = models.twinImage;
   const image = await Promise.all(
-    refs.map((r, i) => toFile(r.bytes, `ref-${i + 1}.${r.mimeType.includes("png") ? "png" : "jpg"}`, { type: r.mimeType })),
+    refs.map((r, i) => toFile(r.bytes, `ref-${i + 1}.${r.mimeType.includes("png") ? "png" : r.mimeType.includes("webp") ? "webp" : "jpg"}`, { type: r.mimeType })),
   );
   const res = await openai().images.edit({
     model,
