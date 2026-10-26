@@ -69,7 +69,7 @@ Build mode: fast (learner asked to finish everything end to end locally before t
   Learner check: Ask Hoppy three real questions about your day and judge the tone: is it supportive, Hinglish-friendly, and never preachy?
   Commit: `Chat about your day and in-character nudges`
 
-- [ ] **7. Your avatar evolves over weeks**
+- [x] **7. Your avatar evolves over weeks**
   Becomes usable: All five body stages exist (Starting Line → Thriving). The stat sheet shows your stage and progress to the next. A sustained good run (plus progress to your goal weight, asked when stages first appear) triggers a stage-up celebration with confetti. A bad week only pauses progress.
   Why now: The long-term half of the kernel. It needs the daily snapshots from slices 4–5.
   PRD ref: `prd.md > The Avatar and Body Stages`, `prd.md > Onboarding (Drip)` (goal weight)
