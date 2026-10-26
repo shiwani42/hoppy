@@ -59,7 +59,7 @@ Build mode: fast (learner asked to finish everything end to end locally before t
   Learner check: On your phone, speak a meal in Hinglish, log a yoga session, tap water three times, and watch the stat sheet fill.
   Commit: `Voice, exercise/yoga, water, sleep and weight logging`
 
-- [ ] **6. Ask about your day, and your avatar talks back**
+- [x] **6. Ask about your day, and your avatar talks back**
   Becomes usable: Ask "how much protein today?" or "can I have a samosa?" and get short, kind, streamed answers using your real numbers. The chat history persists. When a stat is low, the avatar nudges in character ("heyy my muscles are cramping 🥲 protein please"), at most 3 times a day. The diet-type question appears the first time Hoppy suggests food.
   Why now: Turns the logging surface into the Zest-style conversation and adds the playful personality that keeps people coming back.
   PRD ref: `prd.md > Ask About Your Day (Chat)`, `prd.md > Daily Stats` (low-stat nudges), `prd.md > Onboarding (Drip)` (diet type)

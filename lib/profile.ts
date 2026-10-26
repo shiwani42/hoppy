@@ -15,6 +15,8 @@ export type Profile = {
   selfie_path: string | null;
   skin_tone: string | null;
   asked: Record<string, string>;
+  stage_changed_at: string | null;
+  start_weight_kg: number | null;
   created_at: string;
 };
 

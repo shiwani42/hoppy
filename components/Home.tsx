@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ActivityCard } from "@/components/ActivityCard";
 import { ActivityConfirmSheet } from "@/components/ActivityConfirmSheet";
 import { Avatar } from "@/components/Avatar";
+import { Celebration } from "@/components/Celebration";
 import { ChatBubble } from "@/components/ChatBubble";
 import { DripQuestion, type DripAnswer } from "@/components/DripQuestion";
 import { StatSheet } from "@/components/StatSheet";
@@ -27,6 +28,8 @@ import { mealTypeFor, type MealAnalysis, type MealItem, type MealType } from "@/
 import { nextQuestion, type DripEvent, type Question } from "@/lib/onboarding/nextQuestion";
 import { isQuestion, type Parsed, type ParsedActivity } from "@/lib/parse/text";
 import { nudgeFor } from "@/lib/rules/nudges";
+import type { StageProgress } from "@/lib/rules/stages";
+import { progressFor, stageUp } from "@/lib/stages/client";
 import { loadProfile, saveProfile, type Profile } from "@/lib/profile";
 import { vitality } from "@/lib/rules/stats";
 import { dateKey, loadToday, saveSnapshot, type Today } from "@/lib/stats/today";
@@ -52,7 +55,10 @@ const GLASS_ML = 250;
 export function Home() {
   const router = useRouter();
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [avatar, setAvatar] = useState<AvatarStage | null>(null);
+  const [stages, setStages] = useState<Record<number, AvatarStage>>({});
+  const [progress, setProgress] = useState<StageProgress | null>(null);
+  const [celebrate, setCelebrate] = useState<number | null>(null);
+  const avatar = profile ? (stages[profile.current_stage] ?? stages[1] ?? null) : null;
   const [today, setToday] = useState<Today | null>(null);
   const meals = today?.meals ?? [];
   const [statsOpen, setStatsOpen] = useState(false);
@@ -111,6 +117,21 @@ export function Home() {
     setTimeout(() => setReacting(false), 700);
   }
 
+  /** Stage-up check after the day's snapshot is saved (lib/rules/stages.ts). */
+  const checkStage = useCallback(async (p: Profile) => {
+    const prog = await progressFor(p);
+    if (prog.canStageUp) {
+      const up = await stageUp(p);
+      setProfile(up);
+      setProgress(await progressFor(up));
+      setStages(await loadAvatarStages());
+      setCelebrate(up.current_stage);
+      return up;
+    }
+    setProgress(prog);
+    return p;
+  }, []);
+
   useEffect(() => {
     (async () => {
       await ensureSession();
@@ -121,12 +142,15 @@ export function Home() {
         return;
       }
       setProfile(p);
-      setAvatar(stages[p.current_stage] ?? stages[1]);
+      setStages(stages);
       const t = await refresh(p);
+      await checkStage(p);
+      // Stages 2–5 may still be generating in the background after onboarding.
+      if (Object.keys(stages).length < 5) setTimeout(async () => setStages(await loadAvatarStages()), 8000);
       if (!maybeAsk(p, "app_open")) maybeAsk(p, "morning", t);
       fetch("/api/capabilities").then((r) => r.json()).then((c) => setServerVoice(!!c.gemini)).catch(() => {});
     })().catch(console.error);
-  }, [router, refresh, maybeAsk]);
+  }, [router, refresh, maybeAsk, checkStage]);
 
   useEffect(() => {
     if (!toast) return;
@@ -182,6 +206,7 @@ export function Home() {
     if (draft.previewUrl) URL.revokeObjectURL(draft.previewUrl);
     setDraft(null);
     await refresh(profile);
+    await checkStage(profile);
     react();
     maybeAsk(profile, "meal_logged");
     const reply = await streamMealReply(
@@ -199,10 +224,13 @@ export function Home() {
     if (sleep_hours != null) await saveSleep(dateKey(), sleep_hours);
     let p = profile;
     if (fields.weight_kg) p = await saveWeight(dateKey(), fields.weight_kg);
+    // The weight when the goal is set is where the journey starts.
+    if (fields.goal_weight_kg && !p.start_weight_kg) Object.assign(fields, { start_weight_kg: p.weight_kg });
     if (Object.keys(fields).length) p = await saveProfile(fields);
     setProfile(p);
     setQuestion(null);
     await refresh(p);
+    await checkStage(p);
     react();
   }
 
@@ -269,6 +297,7 @@ export function Home() {
     await saveActivity(a, profile.weight_kg, activityDraft.source);
     setActivityDraft(null);
     await refresh(profile);
+    await checkStage(profile);
     react();
   }
 
@@ -302,7 +331,10 @@ export function Home() {
           className="mt-4"
           vitality={today ? vitality(today.stats) : undefined}
           reacting={reacting}
-          onClick={() => setStatsOpen(true)}
+          onClick={() => {
+            setStatsOpen(true);
+            maybeAsk(profile, "stages_shown");
+          }}
         />
       </header>
 
@@ -382,6 +414,8 @@ export function Home() {
           onClose={() => setStatsOpen(false)}
           stats={today.stats}
           stage={profile.current_stage}
+          stageProgress={progress}
+          stages={stages}
           footer={
             <QuickLog
               sleepHours={today.totals.sleepHours}
@@ -415,6 +449,10 @@ export function Home() {
           onClose={() => setDraft(null)}
         />
       )}
+      {celebrate && (
+        <Celebration stage={celebrate} url={stages[celebrate]?.url} onClose={() => setCelebrate(null)} />
+      )}
+
       {activityDraft && (
         <ActivityConfirmSheet
           key={activityDraft.key}
