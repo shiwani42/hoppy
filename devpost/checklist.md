@@ -139,7 +139,7 @@ Build mode: fast (learner asked to finish everything end to end locally before t
   Learner check: Export a 30-day PDF. Would a doctor understand it at a glance?
   Commit: `Health reports with AI summary and PDF export`
 
-- [ ] **14. Friends, feed, and a fair leaderboard**
+- [x] **14. Friends, feed, and a fair leaderboard**
   Becomes usable: Share an invite link; a friend who opens it is added. See your friends' shared cards in a feed and a weekly leaderboard ranked by strong days (consistency, not weight lost). Optionally link Google to keep your progress across devices.
   Why now: Tier 3; it needs shared cards (slice 8) and daily snapshots, plus new RLS rules for friend visibility.
   PRD ref: `prd.md > Community`
@@ -199,3 +199,4 @@ Activity mode:
 - Push verification: the sending side (VAPID signing, aes128gcm encryption, 201 accepted, 410 → subscription removed, one send per reminder per day, skip logged meals and taken doses) was verified against a local HTTPS mock push service. The real `pg_cron` → `pg_net` → `/api/cron/reminders` loop was observed running every 5 minutes. Headless Chrome cannot register with a real browser push service (it hangs, and is unsupported in incognito), so **receiving a notification on a real device is the learner check**.
 - Turning on reminders now always creates the meal reminders, and a push-service failure shows its own honest message. Previously a failed subscribe was reported as "blocked" and left nothing for the in-app fallback to remind about.
 - Community privacy is enforced in the database: friendships are created only by the `accept_invite` function (always mutual), friends read only shared cards (rows plus images) and the weekly strong-day count via `weekly_leaderboard`, and strangers see nothing. "Weekly" means the last 7 days (rolling), so the board never resets to zero on Mondays. Google linking is wired (`linkIdentity`, manual linking enabled locally) but needs a Google OAuth client in Supabase; until then the button explains that kindly.
+- Sample specialist profiles live in a migration (flagged `is_sample`) rather than `seed.sql`, because a cloud `db push` doesn't run seeds and the directory would be empty in production.
