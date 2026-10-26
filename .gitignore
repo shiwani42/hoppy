@@ -1,0 +1,42 @@
+# Personal learning context — keep out of commits
+/devpost/learner-profile.md
+
+# Local credentials
+.env
+.env.*
+!.env.example
+
+# dependencies
+/node_modules
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+/build
+
+# misc
+.DS_Store
+*.pem
+/certificates
+
+# debug
+npm-debug.log*
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# supabase local
+/supabase/.branches
+/supabase/.temp
+
+# service worker build output
+/public/sw.js
+/public/sw.js.map
+/public/swe-worker*

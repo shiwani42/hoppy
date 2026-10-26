@@ -1,0 +1,80 @@
+@import "tailwindcss";
+
+/* Hoppy theme — see spec.md > Look and Feel */
+@theme {
+  --color-cream: #fbf6ee;
+  --color-card: #ffffff;
+  --color-ink: #1f1b16;
+  --color-ink-soft: #6b6157;
+  --color-line: #ece3d6;
+  --color-teal: #0f6e6e;
+  --color-teal-soft: #e3f1ef;
+  --color-turmeric: #e8a317;
+
+  --color-strength: #d64545;
+  --color-muscle: #f08a24;
+  --color-digestion: #4c9a2a;
+  --color-hydration: #3a8dde;
+  --color-energy: #e8a317;
+  --color-rest: #4b4e9e;
+
+  --font-display: var(--font-baloo), ui-rounded, system-ui, sans-serif;
+  --font-sans: var(--font-mukta), system-ui, sans-serif;
+
+  --animate-float: float 4s ease-in-out infinite;
+  --animate-pop: pop 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+  --animate-fade-up: fade-up 0.45s ease-out both;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes pop {
+  from {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes fade-up {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+html {
+  font-size: 17px;
+}
+
+body {
+  background: var(--color-cream);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
