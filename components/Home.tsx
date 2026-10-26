@@ -2,26 +2,32 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ActivityCard } from "@/components/ActivityCard";
+import { ActivityConfirmSheet } from "@/components/ActivityConfirmSheet";
 import { Avatar } from "@/components/Avatar";
 import { DripQuestion, type DripAnswer } from "@/components/DripQuestion";
 import { StatSheet } from "@/components/StatSheet";
 import { InputBar } from "@/components/InputBar";
 import { MealCard } from "@/components/MealCard";
 import { MealConfirmSheet } from "@/components/MealConfirmSheet";
+import { QuickLog } from "@/components/QuickLog";
+import { Tumbler } from "@/components/Tumbler";
 import { loadAvatarStages, type AvatarStage } from "@/lib/avatar/client";
 import { NOT_FOOD } from "@/lib/copy/voice";
 import { greeting } from "@/lib/greeting";
 import { resizeImage } from "@/lib/image";
+import { addWater, deleteActivity, saveActivity, saveSleep, saveWeight, undoLastWater, type SavedActivity } from "@/lib/logs/client";
 import {
-  deleteMeal, mealTotals, saveMeal, setMealReply, streamMealReply, toEditable, updateMeal,
+  deleteMeal, mealTotals, saveMeal, setMealReply, startOfDay, streamMealReply, toEditable, updateMeal,
   type SavedMeal,
 } from "@/lib/meals/client";
 import { mealTypeFor, type MealAnalysis, type MealItem, type MealType } from "@/lib/meals/types";
 import { nextQuestion, type DripEvent, type Question } from "@/lib/onboarding/nextQuestion";
+import type { Parsed, ParsedActivity } from "@/lib/parse/text";
 import { loadProfile, saveProfile, type Profile } from "@/lib/profile";
 import { vitality } from "@/lib/rules/stats";
 import { dateKey, loadToday, saveSnapshot, type Today } from "@/lib/stats/today";
-import { api, ensureSession } from "@/lib/supabase/client";
+import { api, apiJson, ensureSession } from "@/lib/supabase/client";
 
 type Draft = {
   key: number;
@@ -31,8 +37,13 @@ type Draft = {
   photo_path?: string;
   previewUrl?: string;
   demo?: boolean;
+  transcript?: string;
   editing?: SavedMeal;
 };
+
+type ActivityDraft = { key: number; activity: ParsedActivity; source: "text" | "voice"; transcript?: string };
+
+const GLASS_ML = 250;
 
 /** prd.md > Screens and Layout — Home (chat) and the core journey steps 3–4. */
 export function Home() {
@@ -46,6 +57,8 @@ export function Home() {
   const [question, setQuestion] = useState<Question | null>(null);
   const [replies, setReplies] = useState<Record<string, string>>({});
   const [draft, setDraft] = useState<Draft | null>(null);
+  const [activityDraft, setActivityDraft] = useState<ActivityDraft | null>(null);
+  const [serverVoice, setServerVoice] = useState(false);
   const [reading, setReading] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
@@ -57,9 +70,10 @@ export function Home() {
     return t;
   }, []);
 
-  const maybeAsk = useCallback((p: Profile, event: DripEvent) => {
-    const q = nextQuestion(p, event);
+  const maybeAsk = useCallback((p: Profile, event: DripEvent, t?: Today) => {
+    const q = nextQuestion(p, event, { sleepLoggedToday: t ? t.totals.sleepHours != null : undefined });
     if (q && p.asked?.[q.id] !== dateKey()) setQuestion(q);
+    return !!q;
   }, []);
 
   function react() {
@@ -78,8 +92,9 @@ export function Home() {
       }
       setProfile(p);
       setAvatar(stages[p.current_stage] ?? stages[1]);
-      await refresh(p);
-      maybeAsk(p, "app_open");
+      const t = await refresh(p);
+      if (!maybeAsk(p, "app_open")) maybeAsk(p, "morning", t);
+      fetch("/api/capabilities").then((r) => r.json()).then((c) => setServerVoice(!!c.gemini)).catch(() => {});
     })().catch(console.error);
   }, [router, refresh, maybeAsk]);
 
@@ -151,12 +166,70 @@ export function Home() {
   async function answerQuestion(a: DripAnswer) {
     if (!profile) return;
     const { sleep_hours, ...fields } = a;
-    void sleep_hours; // sleep is logged separately (slice 5)
-    const p = await saveProfile(fields);
+    if (sleep_hours != null) await saveSleep(dateKey(), sleep_hours);
+    let p = profile;
+    if (fields.weight_kg) p = await saveWeight(dateKey(), fields.weight_kg);
+    if (Object.keys(fields).length) p = await saveProfile(fields);
     setProfile(p);
     setQuestion(null);
     await refresh(p);
     react();
+  }
+
+  /** Routes a parsed typed/spoken log to the right confirm sheet. */
+  function openParsed(r: Parsed & { transcript?: string }, source: "text" | "voice") {
+    if (r.kind === "meal") {
+      setDraft({ key: Date.now(), items: r.items, type: mealTypeFor(), source: source === "voice" ? "voice" : "manual", transcript: r.transcript });
+      if (r.unknown.length) setToast(`I couldn't place "${r.unknown.join(", ")}" — add it with Something else.`);
+    } else if (r.kind === "activity") {
+      setActivityDraft({ key: Date.now(), activity: r.activity, source, transcript: r.transcript });
+    } else {
+      setToast("I didn't catch a food or workout in that. Try “2 roti, dal” or “30 min walk”.");
+    }
+  }
+
+  async function onText(text: string) {
+    try {
+      openParsed(await apiJson<Parsed>("/api/log/text", { text }), "text");
+    } catch (err) {
+      setToast(err instanceof Error ? err.message : "That didn't work.");
+    }
+  }
+
+  async function onVoice({ audio, transcript }: { audio?: Blob; transcript?: string }) {
+    try {
+      if (audio) {
+        const form = new FormData();
+        form.append("audio", audio, "voice.webm");
+        const res = await api("/api/log/voice", { method: "POST", body: form });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error);
+        openParsed(json, "voice");
+      } else if (transcript) {
+        const r = await apiJson<Parsed>("/api/log/text", { text: transcript });
+        openParsed({ ...r, transcript }, "voice");
+      } else {
+        setToast("I didn't hear anything. Try again?");
+      }
+    } catch (err) {
+      setToast(err instanceof Error ? err.message : "Couldn't hear that clearly.");
+    }
+  }
+
+  async function confirmActivity(a: ParsedActivity & { minutes: number }) {
+    if (!profile || !activityDraft) return;
+    await saveActivity(a, profile.weight_kg, activityDraft.source);
+    setActivityDraft(null);
+    await refresh(profile);
+    react();
+  }
+
+  async function water(delta: 1 | -1) {
+    if (!profile) return;
+    if (delta > 0) await addWater(GLASS_ML);
+    else await undoLastWater(startOfDay());
+    await refresh(profile);
+    if (delta > 0) react();
   }
 
   if (!profile) {
@@ -165,10 +238,15 @@ export function Home() {
 
   return (
     <main className="flex flex-1 flex-col px-5 pt-8">
-      <header className="flex flex-col items-center text-center">
+      <header className="relative flex flex-col items-center text-center">
         <h1 className="font-display text-3xl font-bold">
           {greeting()}, {profile.name}.
         </h1>
+        {today && (
+          <div className="absolute right-5 top-24 z-10">
+            <Tumbler ml={today.totals.waterMl} target={today.targets.waterMl} glassMl={GLASS_ML} onAdd={() => water(1)} onUndo={() => water(-1)} />
+          </div>
+        )}
         <Avatar
           url={avatar?.url}
           isPlaceholder={avatar?.is_placeholder}
@@ -181,23 +259,34 @@ export function Home() {
       </header>
 
       <section className="mt-6 flex flex-col gap-4 pb-4" aria-label="Today">
-        {meals.length === 0 && !reading && (
+        {meals.length === 0 && !today?.activities.length && !reading && (
           <p className="rounded-3xl bg-card px-5 py-4 text-center font-display text-lg shadow-sm">
-            What did you last eat? Snap it, or search for it. 🍽️
+            What did you last eat? Snap it or tell me. 🍽️
           </p>
         )}
-        {meals.map((m) => (
-          <MealCard
-            key={m.id}
-            meal={m}
-            reply={replies[m.id]}
-            onEdit={() => setDraft({ key: Date.now(), items: m.meal_items.map(toEditable), type: m.meal_type, source: m.source, editing: m })}
-            onDelete={async () => {
-              await deleteMeal(m.id);
-              await refresh(profile);
-            }}
-          />
-        ))}
+        {timeline(meals, today?.activities ?? []).map((entry) =>
+          entry.kind === "activity" ? (
+            <ActivityCard
+              key={entry.a.id}
+              a={entry.a}
+              onDelete={async () => {
+                await deleteActivity(entry.a.id);
+                await refresh(profile);
+              }}
+            />
+          ) : (
+            <MealCard
+              key={entry.m.id}
+              meal={entry.m}
+              reply={replies[entry.m.id]}
+              onEdit={() => setDraft({ key: Date.now(), items: entry.m.meal_items.map(toEditable), type: entry.m.meal_type, source: entry.m.source, editing: entry.m })}
+              onDelete={async () => {
+                await deleteMeal(entry.m.id);
+                await refresh(profile);
+              }}
+            />
+          ),
+        )}
         {question && (
           <DripQuestion
             key={question.id}
@@ -217,7 +306,13 @@ export function Home() {
         )}
       </section>
 
-      <InputBar onPhoto={onPhoto} onSearch={() => setDraft({ key: Date.now(), items: [], type: mealTypeFor(), source: "manual" })} />
+      <InputBar
+        onPhoto={onPhoto}
+        onSearch={() => setDraft({ key: Date.now(), items: [], type: mealTypeFor(), source: "manual" })}
+        onText={onText}
+        onVoice={onVoice}
+        serverVoice={serverVoice}
+      />
 
       {toast && (
         <div role="status" className="fixed inset-x-5 top-5 z-50 mx-auto max-w-md rounded-2xl bg-ink px-4 py-3 text-center text-cream shadow-lg animate-fade-up">
@@ -226,7 +321,27 @@ export function Home() {
       )}
 
       {today && (
-        <StatSheet open={statsOpen} onClose={() => setStatsOpen(false)} stats={today.stats} stage={profile.current_stage} />
+        <StatSheet
+          open={statsOpen}
+          onClose={() => setStatsOpen(false)}
+          stats={today.stats}
+          stage={profile.current_stage}
+          footer={
+            <QuickLog
+              sleepHours={today.totals.sleepHours}
+              weightKg={profile.weight_kg}
+              onSleep={async (h) => {
+                await saveSleep(dateKey(), h);
+                await refresh(profile);
+              }}
+              onWeight={async (kg) => {
+                const p = await saveWeight(dateKey(), kg);
+                setProfile(p);
+                await refresh(p);
+              }}
+            />
+          }
+        />
       )}
 
       {draft && (
@@ -238,11 +353,32 @@ export function Home() {
           initialType={draft.type}
           photoUrl={draft.previewUrl}
           demo={draft.demo}
+          transcript={draft.transcript}
           busyLabel={draft.editing ? "Save" : "Log it"}
           onConfirm={confirm}
           onClose={() => setDraft(null)}
         />
       )}
+      {activityDraft && (
+        <ActivityConfirmSheet
+          key={activityDraft.key}
+          initial={activityDraft.activity}
+          weightKg={profile.weight_kg}
+          transcript={activityDraft.transcript}
+          onConfirm={confirmActivity}
+          onClose={() => setActivityDraft(null)}
+        />
+      )}
     </main>
   );
+}
+
+type Entry = { kind: "meal"; at: string; m: SavedMeal } | { kind: "activity"; at: string; a: SavedActivity };
+
+/** Meals and workouts interleaved by time. */
+function timeline(meals: SavedMeal[], activities: SavedActivity[]): Entry[] {
+  return [
+    ...meals.map((m) => ({ kind: "meal" as const, at: m.eaten_at, m })),
+    ...activities.map((a) => ({ kind: "activity" as const, at: a.done_at, a })),
+  ].sort((x, y) => x.at.localeCompare(y.at));
 }

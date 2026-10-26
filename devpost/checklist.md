@@ -39,7 +39,7 @@ Build mode: fast (learner asked to finish everything end to end locally before t
   Learner check: Snap something you actually ate, fix the portion, and judge whether the dish, calories, and one-liner feel right.
   Commit: `Photo meal logging with meal card`
 
-- [ ] **4. Your avatar reacts to what you eat**
+- [x] **4. Your avatar reacts to what you eat**
   Becomes usable: After a meal, your avatar's expression and glow change. Tapping the avatar opens the stat sheet with six colored bars ("42 / 55 g protein"). After your first meal, the avatar asks your height and weight in chat (then age and sex when it builds your calorie target), and the Energy stat unlocks. Stats without enough data show "tell me more to unlock".
   Why now: This is the kernel (your choices power a character that is you), so it comes right after the first input exists. The research-backed rules engine is pure code and gets unit tests.
   PRD ref: `prd.md > Daily Stats`, `prd.md > Onboarding (Drip)`, `prd.md > The Avatar and Body Stages` (day-level feel)

@@ -1,6 +1,7 @@
 "use client";
 
 import { sumNutrients } from "@/lib/meals/foods";
+import { loadActivities, loadSleep, loadWaterMl, type SavedActivity } from "@/lib/logs/client";
 import { loadMeals, startOfDay, type SavedMeal } from "@/lib/meals/client";
 import type { Profile } from "@/lib/profile";
 import { computeStats, EMPTY_DAY, isStrongDay, type DayTotals, type Stat, type StatKey } from "@/lib/rules/stats";
@@ -10,6 +11,7 @@ import { supabase } from "@/lib/supabase/client";
 export type Today = {
   date: string;
   meals: SavedMeal[];
+  activities: SavedActivity[];
   totals: DayTotals;
   targets: Targets;
   stats: Record<StatKey, Stat>;
@@ -34,20 +36,30 @@ export function targetsFor(p: Profile) {
   });
 }
 
-/** Extra day inputs beyond meals; filled in by later slices (activities, water, sleep). */
-export type DayExtras = Partial<Pick<DayTotals, "kcalOut" | "waterMl" | "activeMinutes" | "sleepHours">>;
-export const extraLoaders: ((from: Date, to: Date) => Promise<DayExtras>)[] = [];
-
 export async function loadToday(profile: Profile, day = new Date()): Promise<Today> {
   const from = startOfDay(day);
   const to = new Date(from.getTime() + 864e5);
-  const [meals, ...extras] = await Promise.all([loadMeals(from, to), ...extraLoaders.map((l) => l(from, to))]);
+  const date = dateKey(from);
+  const [meals, activities, waterMl, sleepHours] = await Promise.all([
+    loadMeals(from, to),
+    loadActivities(from, to),
+    loadWaterMl(from, to),
+    loadSleep(date),
+  ]);
   const n = sumNutrients(meals.flatMap((m) => m.meal_items));
-  const totals: DayTotals = { ...EMPTY_DAY, kcalIn: n.kcal, proteinG: n.protein_g, fiberG: n.fiber_g };
-  for (const e of extras) Object.assign(totals, Object.fromEntries(Object.entries(e).filter(([, v]) => v != null)));
+  const totals: DayTotals = {
+    ...EMPTY_DAY,
+    kcalIn: n.kcal,
+    proteinG: n.protein_g,
+    fiberG: n.fiber_g,
+    kcalOut: activities.reduce((a, x) => a + Number(x.kcal), 0),
+    activeMinutes: activities.reduce((a, x) => a + Number(x.active_minutes), 0),
+    waterMl,
+    sleepHours,
+  };
   const targets = targetsFor(profile);
   const stats = computeStats(totals, targets);
-  return { date: dateKey(from), meals, totals, targets, stats, strong: isStrongDay(stats) };
+  return { date, meals, activities, totals, targets, stats, strong: isStrongDay(stats) };
 }
 
 /** Upserts today's row in daily_snapshots after every log. */

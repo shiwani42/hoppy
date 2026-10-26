@@ -64,3 +64,25 @@ export async function geminiJson<T extends z.ZodType>(
 export async function analyzeMealPhotoGemini(image: Buffer, mimeType: string, prompt: string): Promise<AiMealT | null> {
   return geminiJson(AiMeal, { bytes: image, mimeType }, prompt);
 }
+
+/** Hinglish-aware transcription of a short voice log (spec.md > Meal Logging — voice). */
+export async function transcribeLog(audio: Buffer, mimeType: string): Promise<string | null> {
+  if (!hasKey.gemini()) return null;
+  const res = await gemini().models.generateContent({
+    model: models.voice,
+    contents: [
+      {
+        role: "user",
+        parts: [
+          { inlineData: { mimeType, data: audio.toString("base64") } },
+          {
+            text:
+              "Transcribe this short food or exercise log from an Indian user. It may be English, Hindi or Hinglish. " +
+              "Write Hindi words in Latin script (e.g. 'do roti, thodi bhindi'), numbers as digits, no commentary.",
+          },
+        ],
+      },
+    ],
+  });
+  return res.text?.trim() || null;
+}

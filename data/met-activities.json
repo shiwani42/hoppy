@@ -1,0 +1,389 @@
+{
+ "_source": "MET values from the 2024 Adult Compendium of Physical Activities (Herrmann et al., J Sport Health Sci 2024). Garba and kabaddi have no Compendium entry; values use comparable folk dancing and contact-sport entries.",
+ "activities": [
+  {
+   "key": "walk-slow",
+   "label": "Walking (easy pace)",
+   "aliases": [
+    "walk",
+    "walking",
+    "stroll",
+    "evening walk",
+    "morning walk",
+    "tahalna"
+   ],
+   "met": 3.0,
+   "emoji": "🚶"
+  },
+  {
+   "key": "walk-brisk",
+   "label": "Brisk walking",
+   "aliases": [
+    "brisk walk",
+    "fast walk",
+    "power walk",
+    "tez chalna"
+   ],
+   "met": 4.3,
+   "emoji": "🚶"
+  },
+  {
+   "key": "treadmill-walk",
+   "label": "Treadmill walk",
+   "aliases": [
+    "treadmill"
+   ],
+   "met": 4.3,
+   "emoji": "🏃"
+  },
+  {
+   "key": "jogging",
+   "label": "Jogging",
+   "aliases": [
+    "jog"
+   ],
+   "met": 7.0,
+   "emoji": "🏃"
+  },
+  {
+   "key": "running",
+   "label": "Running",
+   "aliases": [
+    "run",
+    "ran"
+   ],
+   "met": 9.8,
+   "emoji": "🏃"
+  },
+  {
+   "key": "cycling-easy",
+   "label": "Cycling (easy)",
+   "aliases": [
+    "cycling",
+    "cycle",
+    "bicycle",
+    "bike ride"
+   ],
+   "met": 4.0,
+   "emoji": "🚴"
+  },
+  {
+   "key": "cycling-moderate",
+   "label": "Cycling (moderate)",
+   "aliases": [
+    "fast cycling"
+   ],
+   "met": 6.8,
+   "emoji": "🚴"
+  },
+  {
+   "key": "stationary-bike",
+   "label": "Stationary bike",
+   "aliases": [
+    "spin",
+    "spinning",
+    "exercise bike"
+   ],
+   "met": 6.8,
+   "emoji": "🚴"
+  },
+  {
+   "key": "swimming",
+   "label": "Swimming",
+   "aliases": [
+    "swim",
+    "swam"
+   ],
+   "met": 6.0,
+   "emoji": "🏊"
+  },
+  {
+   "key": "hatha-yoga",
+   "label": "Yoga (hatha)",
+   "aliases": [
+    "yoga",
+    "asana",
+    "asanas",
+    "yog"
+   ],
+   "met": 2.5,
+   "emoji": "🧘"
+  },
+  {
+   "key": "power-yoga",
+   "label": "Power yoga",
+   "aliases": [
+    "vinyasa",
+    "ashtanga"
+   ],
+   "met": 4.0,
+   "emoji": "🧘"
+  },
+  {
+   "key": "surya-namaskar",
+   "label": "Surya namaskar",
+   "aliases": [
+    "sun salutation",
+    "sun salutations",
+    "suryanamaskar"
+   ],
+   "met": 3.3,
+   "emoji": "🧘"
+  },
+  {
+   "key": "pranayama",
+   "label": "Pranayama",
+   "aliases": [
+    "breathing",
+    "anulom vilom",
+    "kapalbhati"
+   ],
+   "met": 2.0,
+   "emoji": "🧘"
+  },
+  {
+   "key": "stretching",
+   "label": "Stretching",
+   "aliases": [
+    "stretch",
+    "mobility"
+   ],
+   "met": 2.3,
+   "emoji": "🤸"
+  },
+  {
+   "key": "pilates",
+   "label": "Pilates",
+   "aliases": [],
+   "met": 3.0,
+   "emoji": "🤸"
+  },
+  {
+   "key": "aerobics",
+   "label": "Aerobics",
+   "aliases": [
+    "aerobic",
+    "low impact aerobics"
+   ],
+   "met": 5.0,
+   "emoji": "💃"
+  },
+  {
+   "key": "zumba",
+   "label": "Zumba",
+   "aliases": [
+    "dance fitness"
+   ],
+   "met": 6.5,
+   "emoji": "💃"
+  },
+  {
+   "key": "dancing",
+   "label": "Dancing",
+   "aliases": [
+    "dance",
+    "bollywood dance"
+   ],
+   "met": 5.0,
+   "emoji": "💃"
+  },
+  {
+   "key": "garba",
+   "label": "Garba / dandiya",
+   "aliases": [
+    "garba",
+    "dandiya",
+    "folk dance"
+   ],
+   "met": 5.5,
+   "emoji": "💃"
+  },
+  {
+   "key": "hiit",
+   "label": "HIIT",
+   "aliases": [
+    "interval training",
+    "circuit"
+   ],
+   "met": 8.0,
+   "emoji": "🔥"
+  },
+  {
+   "key": "skipping",
+   "label": "Skipping rope",
+   "aliases": [
+    "skipping",
+    "jump rope",
+    "rope skipping"
+   ],
+   "met": 11.8,
+   "emoji": "🔥"
+  },
+  {
+   "key": "stairs",
+   "label": "Climbing stairs",
+   "aliases": [
+    "stairs",
+    "stair climbing",
+    "seedhi"
+   ],
+   "met": 4.0,
+   "emoji": "🪜"
+  },
+  {
+   "key": "weights-moderate",
+   "label": "Weight training",
+   "aliases": [
+    "gym",
+    "weights",
+    "weight training",
+    "strength training",
+    "lifting"
+   ],
+   "met": 3.5,
+   "emoji": "🏋️"
+  },
+  {
+   "key": "weights-vigorous",
+   "label": "Heavy weight training",
+   "aliases": [
+    "heavy lifting",
+    "powerlifting"
+   ],
+   "met": 6.0,
+   "emoji": "🏋️"
+  },
+  {
+   "key": "calisthenics",
+   "label": "Bodyweight workout",
+   "aliases": [
+    "pushups",
+    "push-ups",
+    "push ups",
+    "squats",
+    "burpees",
+    "calisthenics",
+    "home workout"
+   ],
+   "met": 3.8,
+   "emoji": "🤸"
+  },
+  {
+   "key": "plank",
+   "label": "Core / plank",
+   "aliases": [
+    "plank",
+    "core",
+    "abs"
+   ],
+   "met": 3.8,
+   "emoji": "🤸"
+  },
+  {
+   "key": "elliptical",
+   "label": "Elliptical",
+   "aliases": [
+    "cross trainer"
+   ],
+   "met": 5.0,
+   "emoji": "🏃"
+  },
+  {
+   "key": "cricket",
+   "label": "Cricket",
+   "aliases": [],
+   "met": 4.8,
+   "emoji": "🏏"
+  },
+  {
+   "key": "badminton",
+   "label": "Badminton",
+   "aliases": [],
+   "met": 5.5,
+   "emoji": "🏸"
+  },
+  {
+   "key": "football",
+   "label": "Football",
+   "aliases": [
+    "soccer"
+   ],
+   "met": 7.0,
+   "emoji": "⚽"
+  },
+  {
+   "key": "basketball",
+   "label": "Basketball",
+   "aliases": [],
+   "met": 6.5,
+   "emoji": "🏀"
+  },
+  {
+   "key": "tennis",
+   "label": "Tennis",
+   "aliases": [],
+   "met": 7.3,
+   "emoji": "🎾"
+  },
+  {
+   "key": "table-tennis",
+   "label": "Table tennis",
+   "aliases": [
+    "ping pong"
+   ],
+   "met": 4.0,
+   "emoji": "🏓"
+  },
+  {
+   "key": "kabaddi",
+   "label": "Kabaddi",
+   "aliases": [],
+   "met": 6.0,
+   "emoji": "🤼"
+  },
+  {
+   "key": "gardening",
+   "label": "Gardening",
+   "aliases": [
+    "garden",
+    "plants"
+   ],
+   "met": 3.8,
+   "emoji": "🪴"
+  },
+  {
+   "key": "housework",
+   "label": "Housework",
+   "aliases": [
+    "cleaning",
+    "sweeping",
+    "mopping",
+    "jhadu",
+    "pocha",
+    "household chores",
+    "chores"
+   ],
+   "met": 3.3,
+   "emoji": "🧹"
+  },
+  {
+   "key": "cooking",
+   "label": "Cooking (standing)",
+   "aliases": [
+    "cooking"
+   ],
+   "met": 2.0,
+   "emoji": "🍳"
+  },
+  {
+   "key": "playing-kids",
+   "label": "Playing with kids",
+   "aliases": [
+    "playing with children",
+    "playing with kids"
+   ],
+   "met": 3.5,
+   "emoji": "🧒"
+  }
+ ]
+}
