@@ -2,6 +2,8 @@
 
 A supportive calorie tracker (calories in **and** out) for Indian adults. Your real meals, workouts, water and sleep power a stylized avatar of *you*, following research-backed rules from ICMR-NIN and WHO.
 
+**Live:** https://hoppy-gamma.vercel.app (install it from Chrome on Android: ⋮ → Install app)
+
 Built for Devpost's *Build With AI: Basics*. Plans live in [`devpost/`](devpost/).
 
 ## Run it locally

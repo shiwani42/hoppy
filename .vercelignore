@@ -1,0 +1,12 @@
+# Never upload local secrets, personal notes or course tooling to Vercel.
+.env
+.env.*
+!.env.example
+devpost/learner-profile.md
+.agents
+.claude
+agent
+skills-lock.json
+supabase/.temp
+supabase/.branches
+certificates
