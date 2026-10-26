@@ -1,3 +1,4 @@
+import { spendAiCall } from "@/lib/ai/budget";
 import { analyzePhoto } from "@/lib/meals/analyze";
 import { HttpError, route, userFromRequest } from "@/lib/supabase/server";
 
@@ -10,6 +11,7 @@ export const POST = route(async (req) => {
   const photo = form?.get("photo");
   if (!(photo instanceof Blob) || photo.size === 0) throw new HttpError(400, "Attach a photo");
   if (photo.size > MAX_BYTES) throw new HttpError(413, "That photo is too large");
+  await spendAiCall(sb, "meal_photo");
 
   const bytes = Buffer.from(await photo.arrayBuffer());
   const mimeType = photo.type || "image/jpeg";

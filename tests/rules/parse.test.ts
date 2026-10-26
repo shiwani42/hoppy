@@ -60,3 +60,14 @@ describe("parseLog", () => {
     expect(parseLog("how much protein did I have today?").kind).toBe("unknown");
   });
 });
+
+import { isQuestion } from "@/lib/parse/text";
+describe("isQuestion", () => {
+  it.each([
+    ["how much protein today", true],
+    ["kitna paani piya", true],
+    ["can I have a samosa", true],
+    ["2 roti dal", false],
+    ["30 min walk", false],
+  ])("%s → %s", (q, v) => expect(isQuestion(q)).toBe(v));
+});

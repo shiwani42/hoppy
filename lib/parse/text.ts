@@ -90,3 +90,9 @@ export function parseLog(input: string): Parsed {
   }
   return items.length ? { kind: "meal", items, unknown } : { kind: "unknown" };
 }
+
+/** Questions go straight to the chat instead of the log parser. */
+export function isQuestion(text: string) {
+  const s = text.trim().toLowerCase();
+  return /\?$/.test(s) || /^(how|what|why|when|which|can|could|should|is|are|do|does|did|am|kya|kitna|kitni|kitne|kaise|kab|kyu|kyun|tell me|show me|suggest)\b/.test(s);
+}

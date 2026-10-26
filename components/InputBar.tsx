@@ -13,7 +13,7 @@ export function InputBar({
   onText,
   onVoice,
   serverVoice,
-  placeholder = "Type what you ate or did…",
+  placeholder = "Log a meal or ask about your day…",
 }: {
   onPhoto: (file: File) => void;
   onSearch: () => void;

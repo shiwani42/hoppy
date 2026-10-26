@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { spendAiCall } from "@/lib/ai/budget";
 import { streamGlm } from "@/lib/ai/glm";
 import { streamText } from "@/lib/ai/mock";
 import { MEAL_REPLIES, pick } from "@/lib/copy/voice";
@@ -25,10 +26,11 @@ function demoLine(t: z.infer<typeof Body>["totals"]) {
 
 /** POST /api/chat/reply — streams the post-log one-liner. spec.md > Chat */
 export const POST = route(async (req) => {
-  await userFromRequest(req);
+  const { sb } = await userFromRequest(req);
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) throw new HttpError(400, "Invalid meal");
   const { items, totals, name } = parsed.data;
+  await spendAiCall(sb, "meal_reply");
 
   const meal = items.map((i) => `${i.quantity} ${i.unit} ${i.name}`).join(", ");
   let stream: ReadableStream<Uint8Array> | null = null;

@@ -15,3 +15,16 @@ export const MEAL_REPLIES = {
 
 export const NOT_FOOD = "That doesn't look like food 👀 Try again, or tell me what you ate.";
 export const AI_SLOW = "I'm a bit slow right now — try again in a moment?";
+
+/** Low-stat nudges, in character (prd.md > Daily Stats — "heyy my muscles are cramping"). */
+export const NUDGES = {
+  hydration: ["Heyy, my throat feels like a desert 🏜️ One glass of water?", "Paani break? Tap the tumbler for me 💧"],
+  muscle: ["Heyy my muscles are cramping 🥲 protein please!", "My biceps are asking for dal, paneer or eggs 💪"],
+  strength: ["I'm getting stiff sitting here… a 15-minute walk? 🚶", "Let's stretch our legs! Even 10 minutes counts."],
+  digestion: ["My tummy wants some fibre — sabzi, fruit or sprouts? 🌾", "Gut check: a little salad would make me very happy 🥗"],
+} as const;
+
+/** Which stat a saved nudge line was about (nudges are stored as plain chat text). */
+export function nudgeKeyOf(line: string): keyof typeof NUDGES | "" {
+  return (Object.keys(NUDGES) as (keyof typeof NUDGES)[]).find((k) => (NUDGES[k] as readonly string[]).includes(line)) ?? "";
+}

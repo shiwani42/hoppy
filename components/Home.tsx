@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ActivityCard } from "@/components/ActivityCard";
 import { ActivityConfirmSheet } from "@/components/ActivityConfirmSheet";
 import { Avatar } from "@/components/Avatar";
+import { ChatBubble } from "@/components/ChatBubble";
 import { DripQuestion, type DripAnswer } from "@/components/DripQuestion";
 import { StatSheet } from "@/components/StatSheet";
 import { InputBar } from "@/components/InputBar";
@@ -13,7 +14,8 @@ import { MealConfirmSheet } from "@/components/MealConfirmSheet";
 import { QuickLog } from "@/components/QuickLog";
 import { Tumbler } from "@/components/Tumbler";
 import { loadAvatarStages, type AvatarStage } from "@/lib/avatar/client";
-import { NOT_FOOD } from "@/lib/copy/voice";
+import { askHoppy, loadChat, saveNudge, type ChatMsg } from "@/lib/chat/client";
+import { NOT_FOOD, NUDGES, nudgeKeyOf, pick } from "@/lib/copy/voice";
 import { greeting } from "@/lib/greeting";
 import { resizeImage } from "@/lib/image";
 import { addWater, deleteActivity, saveActivity, saveSleep, saveWeight, undoLastWater, type SavedActivity } from "@/lib/logs/client";
@@ -23,7 +25,8 @@ import {
 } from "@/lib/meals/client";
 import { mealTypeFor, type MealAnalysis, type MealItem, type MealType } from "@/lib/meals/types";
 import { nextQuestion, type DripEvent, type Question } from "@/lib/onboarding/nextQuestion";
-import type { Parsed, ParsedActivity } from "@/lib/parse/text";
+import { isQuestion, type Parsed, type ParsedActivity } from "@/lib/parse/text";
+import { nudgeFor } from "@/lib/rules/nudges";
 import { loadProfile, saveProfile, type Profile } from "@/lib/profile";
 import { vitality } from "@/lib/rules/stats";
 import { dateKey, loadToday, saveSnapshot, type Today } from "@/lib/stats/today";
@@ -59,14 +62,41 @@ export function Home() {
   const [draft, setDraft] = useState<Draft | null>(null);
   const [activityDraft, setActivityDraft] = useState<ActivityDraft | null>(null);
   const [serverVoice, setServerVoice] = useState(false);
+  const [chat, setChat] = useState<ChatMsg[]>([]);
+  const [pending, setPending] = useState<{ q: string; a: string } | null>(null);
   const [reading, setReading] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+
+  const nudging = useRef(false);
 
   /** Recomputes today's stats from the logs and stores the day's snapshot. */
   const refresh = useCallback(async (p: Profile) => {
     const t = await loadToday(p);
     setToday(t);
     await saveSnapshot(t, p.weight_kg);
+    const from = startOfDay();
+    const to = new Date(from.getTime() + 864e5);
+    let msgs = await loadChat(from, to);
+    // The avatar speaks up when a stat is low (lib/rules/nudges.ts). Overlapping
+    // refreshes (app open + a log) take turns and re-check fresh history first.
+    // On the signup day, stay quiet until the first log: the empty state already invites one.
+    const firstDay = dateKey(new Date(p.created_at)) === t.date;
+    const anyLog = t.meals.length + t.activities.length > 0 || t.totals.waterMl > 0;
+    if (!nudging.current && (!firstDay || anyLog)) {
+      nudging.current = true;
+      try {
+        msgs = await loadChat(from, to);
+        const past = msgs.filter((m) => m.kind === "nudge").map((m) => ({ at: new Date(m.created_at), key: nudgeKeyOf(m.content) }));
+        const due = nudgeFor(t.stats, new Date(), past);
+        if (due) {
+          await saveNudge(pick(NUDGES[due]));
+          msgs = await loadChat(from, to);
+        }
+      } finally {
+        nudging.current = false;
+      }
+    }
+    setChat(msgs);
     return t;
   }, []);
 
@@ -188,9 +218,27 @@ export function Home() {
     }
   }
 
+  async function ask(question: string) {
+    if (!profile) return;
+    setPending({ q: question, a: "" });
+    try {
+      const res = await askHoppy(question, startOfDay(), dateKey(), (a) => setPending({ q: question, a }));
+      const from = startOfDay();
+      setChat(await loadChat(from, new Date(from.getTime() + 864e5)));
+      if (res.suggestsFood) maybeAsk(profile, "food_suggested");
+    } catch (err) {
+      setToast(err instanceof Error ? err.message : "That didn't work.");
+    } finally {
+      setPending(null);
+    }
+  }
+
   async function onText(text: string) {
     try {
-      openParsed(await apiJson<Parsed>("/api/log/text", { text }), "text");
+      if (isQuestion(text)) return await ask(text);
+      const r = await apiJson<Parsed>("/api/log/text", { text });
+      if (r.kind === "unknown") return await ask(text);
+      openParsed(r, "text");
     } catch (err) {
       setToast(err instanceof Error ? err.message : "That didn't work.");
     }
@@ -264,8 +312,10 @@ export function Home() {
             What did you last eat? Snap it or tell me. 🍽️
           </p>
         )}
-        {timeline(meals, today?.activities ?? []).map((entry) =>
-          entry.kind === "activity" ? (
+        {timeline(meals, today?.activities ?? [], chat).map((entry) =>
+          entry.kind === "chat" ? (
+            <ChatBubble key={entry.c.id} role={entry.c.role} content={entry.c.content} stat={entry.c.stat} nudge={entry.c.kind === "nudge"} />
+          ) : entry.kind === "activity" ? (
             <ActivityCard
               key={entry.a.id}
               a={entry.a}
@@ -286,6 +336,12 @@ export function Home() {
               }}
             />
           ),
+        )}
+        {pending && (
+          <>
+            <ChatBubble role="user" content={pending.q} />
+            <ChatBubble role="assistant" content={pending.a || "…"} />
+          </>
         )}
         {question && (
           <DripQuestion
@@ -373,12 +429,16 @@ export function Home() {
   );
 }
 
-type Entry = { kind: "meal"; at: string; m: SavedMeal } | { kind: "activity"; at: string; a: SavedActivity };
+type Entry =
+  | { kind: "meal"; at: string; m: SavedMeal }
+  | { kind: "activity"; at: string; a: SavedActivity }
+  | { kind: "chat"; at: string; c: ChatMsg };
 
-/** Meals and workouts interleaved by time. */
-function timeline(meals: SavedMeal[], activities: SavedActivity[]): Entry[] {
+/** Meals, workouts and chat interleaved by time. */
+function timeline(meals: SavedMeal[], activities: SavedActivity[], chat: ChatMsg[]): Entry[] {
   return [
     ...meals.map((m) => ({ kind: "meal" as const, at: m.eaten_at, m })),
     ...activities.map((a) => ({ kind: "activity" as const, at: a.done_at, a })),
-  ].sort((x, y) => x.at.localeCompare(y.at));
+    ...chat.map((c) => ({ kind: "chat" as const, at: c.created_at, c })),
+  ].sort((x, y) => new Date(x.at).getTime() - new Date(y.at).getTime());
 }
