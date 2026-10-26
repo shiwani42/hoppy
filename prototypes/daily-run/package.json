@@ -1,0 +1,7 @@
+{
+  "name": "hoppy-daily-run-prototype",
+  "private": true,
+  "description": "Three.js endless-runner prototype (kept as an alternate, younger-audience version).",
+  "scripts": { "start": "npx --yes serve -l 3002 ." },
+  "dependencies": { "three": "0.181.0" }
+}

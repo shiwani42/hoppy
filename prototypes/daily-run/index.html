@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Hoppy — Daily run (prototype)</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Ccircle cx=%2232%22 cy=%2232%22 r=%2230%22 fill=%22%230F6E6E%22/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@600;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root { --ink:#0E0F0F; --soft:#5D625F; --paper:#FFFFFF; --ground:#F4F5F2; --blue:#1F4FE0; --orange:#F08A24; --green:#3E9A4A; --sky:#3A8DDE; }
+  html, body { margin:0; height:100%; background:#d9dde2; font-family:Inter, system-ui, sans-serif; color:var(--ink); overflow:hidden; touch-action:none; -webkit-user-select:none; user-select:none; }
+  .phone { position:relative; height:100%; max-width:460px; margin:0 auto; overflow:hidden; background:#cfe0ee; }
+  canvas { display:block; width:100%; height:100%; }
+  .hud { position:absolute; inset:0; pointer-events:none; }
+  .top { position:absolute; top:max(14px, env(safe-area-inset-top)); left:14px; right:14px; display:flex; justify-content:space-between; align-items:center; }
+  .chip { pointer-events:auto; display:flex; align-items:center; gap:10px; background:rgba(255,255,255,.9); backdrop-filter:blur(10px); border-radius:999px; padding:8px 14px 8px 8px; box-shadow:0 6px 20px rgba(0,0,0,.10); }
+  .ring { width:38px; height:38px; }
+  .chip b { font-family:"Inter Tight"; font-weight:800; font-size:16px; display:block; line-height:1.1; }
+  .chip small { color:var(--soft); font-size:12px; }
+  .timer { padding:10px 14px; font-family:"Inter Tight"; font-weight:800; font-size:18px; font-variant-numeric:tabular-nums; }
+  .gauges { position:absolute; left:14px; right:14px; bottom:max(16px, env(safe-area-inset-bottom)); display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px; background:rgba(255,255,255,.9); backdrop-filter:blur(10px); border-radius:22px; padding:12px 14px; box-shadow:0 10px 30px rgba(0,0,0,.10); }
+  .gauge span { font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--soft); }
+  .gauge b { display:block; font-family:"Inter Tight"; font-weight:800; font-size:18px; font-variant-numeric:tabular-nums; }
+  .bar { height:6px; border-radius:6px; background:#e8e9e6; margin-top:6px; overflow:hidden; } .bar i { display:block; height:100%; width:0; border-radius:6px; transition:width .25s ease-out; }
+  .toast { position:absolute; left:50%; top:110px; transform:translateX(-50%) translateY(-8px); opacity:0; background:var(--ink); color:#fff; font-weight:600; font-size:14px; padding:9px 16px; border-radius:999px; transition:opacity .2s, transform .2s; white-space:nowrap; }
+  .toast.on { opacity:1; transform:translateX(-50%) translateY(0); }
+  .pop { position:absolute; font-family:"Inter Tight"; font-weight:800; font-size:22px; transform:translate(-50%,-50%); pointer-events:none; text-shadow:0 2px 10px rgba(255,255,255,.8); }
+  .sheet { position:absolute; inset:0; display:flex; align-items:flex-end; justify-content:center; background:linear-gradient(180deg, rgba(244,245,242,0) 30%, rgba(244,245,242,.92) 62%); pointer-events:auto; }
+  .card { width:100%; box-sizing:border-box; padding:26px 22px max(26px, env(safe-area-inset-bottom)); }
+  .card h1 { margin:0; font-family:"Inter Tight"; font-weight:800; font-size:40px; letter-spacing:-.03em; line-height:1; }
+  .card p { margin:8px 0 0; color:var(--soft); font-size:15px; line-height:1.45; }
+  .boosts { list-style:none; margin:16px 0 0; padding:0; display:flex; flex-direction:column; gap:8px; }
+  .boosts li { display:flex; align-items:center; gap:12px; background:#fff; border-radius:16px; padding:11px 14px; box-shadow:0 4px 14px rgba(0,0,0,.05); font-size:14px; }
+  .boosts li i { width:10px; height:10px; border-radius:50%; flex:none; }
+  .boosts li em { margin-left:auto; font-style:normal; font-weight:600; }
+  .go { margin-top:18px; width:100%; height:58px; border:0; border-radius:999px; background:var(--ink); color:#fff; font:600 18px Inter, sans-serif; cursor:pointer; box-shadow:0 14px 30px rgba(14,15,15,.25); }
+  .hint { margin-top:10px; text-align:center; font-size:12px; color:var(--soft); }
+  .hidden { display:none !important; }
+</style>
+<script type="importmap">{ "imports": { "three": "./node_modules/three/build/three.module.js", "three/addons/": "./node_modules/three/examples/jsm/" } }</script>
+</head>
+<body>
+<div class="phone" id="phone">
+  <canvas id="c" aria-label="Your Hoppy character running through the street"></canvas>
+  <div class="hud" id="hud">
+    <div class="top">
+      <div class="chip">
+        <svg class="ring" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="16" fill="none" stroke="#e6e8e5" stroke-width="4"/><circle id="xpRing" cx="20" cy="20" r="16" fill="none" stroke="#1F4FE0" stroke-width="4" stroke-linecap="round" stroke-dasharray="100.5" stroke-dashoffset="36" transform="rotate(-90 20 20)"/></svg>
+        <div><b id="lvl">Level 7</b><small id="xp">640 / 1000 XP</small></div>
+      </div>
+      <div class="chip timer" id="timer" aria-live="off">1:00</div>
+    </div>
+    <div class="toast" id="toast" role="status"></div>
+    <div class="gauges" id="gauges">
+      <div class="gauge"><span>Build · today</span><b id="gBuild">34 g</b><div class="bar"><i id="bBuild" style="background:var(--orange)"></i></div></div>
+      <div class="gauge"><span>Hydration</span><b id="gWater">1.2 L</b><div class="bar"><i id="bWater" style="background:var(--sky)"></i></div></div>
+      <div class="gauge"><span>Digestion</span><b id="gFiber">14 g</b><div class="bar"><i id="bFiber" style="background:var(--green)"></i></div></div>
+    </div>
+  </div>
+
+  <div class="sheet" id="start">
+    <div class="card">
+      <h1>Daily run</h1>
+      <p>Your real day powers your runner. Collect dal, water and fruit for XP, and dodge the carts. Your gauges below are today's real numbers.</p>
+      <ul class="boosts" aria-label="Boosts from today">
+        <li><i style="background:var(--orange)"></i>Protein 34 g today<em>Jump +15%</em></li>
+        <li><i style="background:var(--sky)"></i>Water 1.2 L today<em>Speed +10%</em></li>
+        <li><i style="background:#4B4E9E"></i>Slept 7.5 h<em>1 shield</em></li>
+      </ul>
+      <button class="go" id="goBtn">Start running</button>
+      <p class="hint">Swipe left/right to switch lanes · up to jump · down to slide<br>(arrow keys on a laptop)</p>
+    </div>
+  </div>
+
+  <div class="sheet hidden" id="end">
+    <div class="card">
+      <h1 id="endTitle">Run complete</h1>
+      <p id="endSub">Nicely done.</p>
+      <ul class="boosts" id="endList"></ul>
+      <button class="go" id="againBtn">Run again</button>
+    </div>
+  </div>
+</div>
+<script type="module" src="./game.js"></script>
+</body>
+</html>

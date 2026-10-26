@@ -1,0 +1,9 @@
+# Prototypes
+
+Explorations kept alongside the app. Not part of the Next.js build.
+
+- `daily-run/` — Subway-Surfers-style 3D runner in three.js: your character runs an Indian street,
+  collecting dal, water and fruit for XP; today's real logs give boosts. Kept as an alternate version
+  for a younger audience. Run: `cd prototypes/daily-run && npm install && npm start`, open http://localhost:3002.
+- `motion-preview/` — the 20-second 2D "moment of play" film (world map, snap lunch, quest, level up)
+  as a standalone page. Open `motion-preview/index.html` in a browser.

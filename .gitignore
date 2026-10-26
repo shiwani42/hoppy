@@ -36,3 +36,6 @@ next-env.d.ts
 /supabase/.branches
 /supabase/.temp
 
+
+# prototype dependencies
+/prototypes/*/node_modules

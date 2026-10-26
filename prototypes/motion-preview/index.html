@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hoppy — a moment of play (preview)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@600;800&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; height: 100%; background: #e9eae6; font-family: Inter, system-ui, sans-serif; color: #0e0f0f; }
+  .shell { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 16px; box-sizing: border-box; height: 100%; }
+  .viewport { flex: 1; min-height: 0; width: 100%; display: flex; align-items: center; justify-content: center; }
+  .frame { position: relative; border-radius: 28px; overflow: hidden; box-shadow: 0 30px 80px rgba(0,0,0,.18); }
+  .controls { display: flex; align-items: center; gap: 12px; width: min(560px, 100%); }
+  .controls button { height: 44px; min-width: 44px; border-radius: 999px; border: 0; background: #0e0f0f; color: #fff; font: 600 15px Inter, sans-serif; padding: 0 16px; cursor: pointer; }
+  .controls input { flex: 1; accent-color: #1f4fe0; }
+  .time { font-variant-numeric: tabular-nums; font-size: 14px; width: 92px; text-align: right; }
+  .chips { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+  .chips button { border: 1px solid #d5d7d2; background: #fff; border-radius: 999px; padding: 8px 14px; font: 500 13px Inter, sans-serif; cursor: pointer; }
+  .chips button[aria-pressed="true"] { background: #1f4fe0; color: #fff; border-color: #1f4fe0; }
+  .note { font-size: 12px; color: #5d625f; }
+
+  /* ---- the film's own look (base.css) ---- */
+  #stage { --ground:#F4F5F2; --main:#1F4FE0; --second:#0E0F0F; --accent:#F08A24; --display:"Inter Tight", Inter, system-ui, sans-serif; --sans:Inter, system-ui, sans-serif;
+    position:absolute; left:0; top:0; width:1080px; height:1920px; overflow:hidden; transform-origin:0 0; background:var(--ground); color:var(--second); font-family:var(--sans) }
+  #stage .scene { position:absolute; inset:0 }
+  .ground { position:absolute; inset:0; background:var(--ground) }
+  .words { position:absolute; margin:0; display:flex; flex-direction:column; gap:18px } .words > * { margin:0 }
+  .line { font-family:var(--display); font-size:96px; line-height:1.02; font-weight:800; letter-spacing:-0.025em } .sub { font-size:38px; color:color-mix(in srgb, var(--second) 62%, var(--ground)) }
+  .card { position:absolute; background:color-mix(in srgb, var(--ground) 25%, #FFFFFF); border-radius:44px; box-shadow:0 28px 70px rgba(0,0,0,.10) }
+  .pill { position:absolute; display:flex; align-items:center; gap:18px; background:color-mix(in srgb, var(--ground) 25%, #FFFFFF); border-radius:999px; box-shadow:0 16px 44px rgba(0,0,0,.10); padding:16px 30px 16px 16px; font-size:34px; font-weight:600 }
+  .num { font-variant-numeric:tabular-nums; font-family:var(--display); font-weight:800; letter-spacing:-0.02em }
+  .art { position:absolute; inset:0; width:100%; height:100%; overflow:visible }
+  .road { fill:none; stroke:color-mix(in srgb, var(--ground) 30%, #FFFFFF); stroke-linecap:round }
+  .park { fill:color-mix(in srgb, var(--ground) 82%, #4C9A2A) } .pond { fill:color-mix(in srgb, var(--ground) 80%, var(--main)) }
+  .halo { fill:none; stroke:var(--main) }
+  .skin { fill:#B9825E } .hair { fill:color-mix(in srgb, var(--second) 88%, #6B4A35) } .tee { fill:var(--main) } .pants { fill:color-mix(in srgb, var(--second) 82%, var(--main)) } .shoe { fill:#FFFFFF }
+  .token { position:absolute; width:150px; height:150px; margin:-75px 0 0 -75px; border-radius:50%; background:#FFFFFF; box-sizing:border-box; border:8px solid var(--accent); box-shadow:0 18px 40px color-mix(in srgb, var(--accent) 35%, transparent); display:flex; align-items:center; justify-content:center }
+  .token.blue { border-color:var(--main); box-shadow:0 18px 40px color-mix(in srgb, var(--main) 30%, transparent) } .token.ink { border-color:var(--second); box-shadow:0 18px 40px rgba(0,0,0,.14) }
+  .tag { position:absolute; transform:translateX(-50%); background:var(--second); color:var(--ground); font-size:30px; font-weight:600; padding:10px 22px; border-radius:999px; white-space:nowrap }
+  .gauge-label { font-size:26px; letter-spacing:.08em; text-transform:uppercase; color:color-mix(in srgb, var(--second) 60%, var(--ground)) }
+  .bar { height:14px; border-radius:14px; background:color-mix(in srgb, var(--ground) 70%, var(--second) 8%) } .bar > i { display:block; height:100%; border-radius:14px; background:var(--main) }
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="viewport"><div class="frame" id="frame"><div id="stage"></div></div></div>
+  <div class="chips" id="chips" role="group" aria-label="Jump to scene"></div>
+  <div class="controls">
+    <button id="play" aria-label="Play">Play</button>
+    <input id="scrub" type="range" min="0" max="20" step="0.01" value="0" aria-label="Scrub through the animation">
+    <span class="time" id="time">0.00 / 20.00 s</span>
+  </div>
+  <p class="note">Local preview of the Motion film (no sound). The avatar is a drawn stand-in for your 3D likeness.</p>
+</div>
+
+<script>
+// ---- a minimal version of the Motion kit: pure functions of time ----
+const clamp01 = (x) => Math.max(0, Math.min(1, x));
+const KIT = {
+  seg: (t, a, b) => clamp01((t - a) / (b - a)),
+  lerp: (a, b, p) => a + (b - a) * p,
+  eo: (x) => 1 - Math.pow(1 - x, 3),
+  ei: (x) => x * x * x,
+  eio: (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2),
+  eob: (x, s = 1.4) => { const c = s + 1; return 1 + c * Math.pow(x - 1, 3) + s * Math.pow(x - 1, 2); },
+  h: (html) => { const d = document.createElement('div'); d.innerHTML = html.trim(); return d.firstElementChild; },
+  TextFx: {
+    fadeFromRight(el, t, t0, { stagger = 0.11, dur = 0.5, dx = 26 } = {}) {
+      if (!el._words) {
+        const words = el.textContent.split(' ');
+        el.textContent = '';
+        el._words = words.map((w, i) => {
+          const s = document.createElement('span');
+          s.textContent = w + (i < words.length - 1 ? ' ' : '');
+          s.style.display = 'inline-block'; s.style.whiteSpace = 'pre';
+          el.appendChild(s); return s;
+        });
+      }
+      el._words.forEach((s, i) => {
+        const p = KIT.eo(KIT.seg(t, t0 + i * stagger, t0 + i * stagger + dur));
+        s.style.opacity = p; s.style.transform = 'translateX(' + (1 - p) * dx + 'px)';
+      });
+    },
+  },
+};
+const SCENES = [];
+KIT.scene = (id, def) => SCENES.push({ id, def });
+const kit = KIT;
+
+// ---- shared.js ----
+window.UI = {
+  map() {
+    return '<svg class="art" viewBox="0 0 1080 1920">' +
+      '<path class="park" d="M-40 1380 C 240 1260 470 1560 720 1420 S 1140 1300 1140 1300 V 2000 H -40 Z"/>' +
+      '<rect class="park" x="90" y="420" width="360" height="250" rx="50"/>' +
+      '<ellipse class="pond" cx="820" cy="560" rx="190" ry="110"/>' +
+      '<path class="road" stroke-width="60" d="M-30 860 C 330 940 640 740 1110 860"/>' +
+      '<path class="road" stroke-width="48" d="M540 -40 C 480 560 640 1180 500 1980"/>' +
+      '<path class="road" stroke-width="38" d="M-30 1640 C 280 1560 460 1720 1110 1660"/>' +
+      '</svg>';
+  },
+  rings() {
+    return '<svg class="art" viewBox="0 0 1080 1920">' +
+      '<ellipse cx="540" cy="1160" rx="230" ry="62" style="fill:var(--main);opacity:.10"/>' +
+      '<ellipse class="halo ring-a" cx="540" cy="1160" rx="360" ry="100" stroke-width="4" style="opacity:.2"/>' +
+      '<ellipse class="halo ring-b" cx="540" cy="1160" rx="500" ry="140" stroke-width="4" style="opacity:.1"/>' +
+      '</svg>';
+  },
+  avatar(cls) {
+    return '<svg class="' + cls + '" viewBox="0 0 300 460" style="position:absolute;left:390px;top:700px;width:300px;height:460px;overflow:visible;transform-origin:150px 460px">' +
+      '<rect class="pants" x="92" y="300" width="52" height="140" rx="24"/><rect class="pants" x="156" y="300" width="52" height="140" rx="24"/>' +
+      '<rect class="shoe" x="80" y="428" width="70" height="30" rx="15" style="stroke:#D9DCD7;stroke-width:3"/><rect class="shoe" x="150" y="428" width="70" height="30" rx="15" style="stroke:#D9DCD7;stroke-width:3"/>' +
+      '<rect class="skin" x="36" y="150" width="44" height="150" rx="22"/><rect class="skin" x="220" y="150" width="44" height="150" rx="22"/>' +
+      '<path class="tee" d="M70 160 Q 70 130 110 128 H 190 Q 230 130 230 160 L 220 320 H 80 Z"/>' +
+      '<rect class="skin" x="130" y="104" width="40" height="34" rx="12"/>' +
+      '<circle class="skin" cx="150" cy="70" r="58"/>' +
+      '<path class="hair" d="M92 72 Q 90 10 150 12 Q 212 10 208 72 Q 196 36 150 40 Q 104 36 92 72 Z"/>' +
+      '<circle cx="128" cy="76" r="6" style="fill:var(--second)"/><circle cx="172" cy="76" r="6" style="fill:var(--second)"/>' +
+      '<path d="M132 98 Q 150 112 168 98" style="fill:none;stroke:var(--second);stroke-width:5;stroke-linecap:round"/>' +
+      '</svg>';
+  },
+  icon(kind, color) {
+    const s = 'fill:none;stroke:' + color + ';stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round';
+    const d = { egg: '<path d="M3 11h18a9 7 0 0 1-18 0z"/><path d="M9 7c0-1.5 1-2.5 2-3M14 7c0-1.5 1-2.5 2-3"/>', drop: '<path d="M12 3c4 5 6 8 6 11a6 6 0 0 1-12 0c0-3 2-6 6-11z"/>', walk: '<circle cx="13" cy="4" r="2"/><path d="M9 21l2-6 3 3v3M7 12l3-3 3 2 3 3"/>' }[kind];
+    return '<svg viewBox="0 0 24 24" style="width:64px;height:64px;' + s + '">' + d + '</svg>';
+  },
+  gauges(prefix) {
+    const g = (k, label, val, of) => '<div style="display:flex;flex-direction:column;gap:10px"><span class="gauge-label">' + label + '</span>' +
+      '<span class="num ' + prefix + '-' + k + '" style="font-size:56px">' + val + '</span><span class="sub" style="font-size:26px">' + of + '</span>' +
+      '<div class="bar"><i class="' + prefix + '-' + k + 'bar"></i></div></div>';
+    return '<div class="card ' + prefix + '-gauges" style="left:60px;top:1290px;width:960px;padding:36px 40px;box-sizing:border-box;display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:36px">' +
+      g('fuel', 'Fuel', '380', 'of 1,450 kcal') + g('build', 'Build', '34 g', 'of 60 g protein') + g('move', 'Move', '19 min', 'of 30 min') + '</div>';
+  },
+  hud(prefix) {
+    return '<div class="pill ' + prefix + '-level" style="left:60px;top:270px">' +
+      '<svg viewBox="0 0 80 80" style="width:80px;height:80px"><circle cx="40" cy="40" r="33" style="fill:none;stroke:#E6E8E5;stroke-width:8"/>' +
+      '<circle class="' + prefix + '-xp" cx="40" cy="40" r="33" style="fill:none;stroke:var(--main);stroke-width:8;stroke-linecap:round" stroke-dasharray="207" stroke-dashoffset="75" transform="rotate(-90 40 40)"/></svg>' +
+      '<div style="display:flex;flex-direction:column;gap:2px"><span class="num ' + prefix + '-lv" style="font-size:38px">Level 7</span><span class="sub ' + prefix + '-xptext" style="font-size:26px">640 / 1000 XP</span></div></div>' +
+      '<div class="pill" style="right:60px;top:282px;padding:18px 30px"><svg viewBox="0 0 24 24" style="width:36px;height:36px;fill:none;stroke:var(--accent);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round"><path d="M12 2c1 4 5 5 5 10a5 5 0 0 1-10 0c0-3 2-4 2-7 2 1 3 2 3 4"/></svg><span class="num">12</span></div>';
+  },
+};
+
+// ---- scene: Morning world (4 s) ----
+(function () {
+  const { seg, eo, eob, eio, lerp } = kit;
+  const WORLD_TOKENS = [
+    { k: 'egg', cls: '', x: 230, y: 640, tag: 'Protein +20 g', at: 0.5 },
+    { k: 'drop', cls: 'blue', x: 860, y: 820, tag: '2 glasses', at: 0.8 },
+    { k: 'walk', cls: 'ink', x: 220, y: 1010, tag: 'Walk 15 min', at: 1.1 },
+  ];
+  kit.scene('world', {
+    dur: 4, name: 'Morning world',
+    init(kit) {
+      const color = { '': 'var(--accent)', blue: 'var(--main)', ink: 'var(--second)' };
+      kit.stage.append(kit.h('<div class="ground">' +
+        '<div class="world-map" style="position:absolute;inset:0;transform-origin:540px 1100px">' + UI.map() + UI.rings() + '</div>' +
+        UI.avatar('world-av') +
+        WORLD_TOKENS.map((o, i) => '<div class="world-tok' + i + '" style="position:absolute;left:' + o.x + 'px;top:' + o.y + 'px">' +
+          '<div class="token ' + o.cls + '" style="left:0;top:0">' + UI.icon(o.k, color[o.cls]) + '</div>' +
+          '<div class="tag" style="left:0;top:96px">' + o.tag + '</div></div>').join('') +
+        UI.hud('world') + UI.gauges('world') + '</div>'));
+      const q = (s) => kit.stage.querySelector(s);
+      this.map = q('.world-map').style;
+      this.av = q('.world-av').style;
+      this.tok = WORLD_TOKENS.map((_, i) => q('.world-tok' + i).style);
+      this.ringA = q('.ring-a').style; this.ringB = q('.ring-b').style;
+      this.gauges = q('.world-gauges').style;
+      this.bars = ['fuel', 'build', 'move'].map((k) => q('.world-' + k + 'bar').style);
+    },
+    render(t) {
+      this.map.transform = 'scale(' + lerp(1.06, 1.0, eio(seg(t, -0.2, 2.2))) + ')';
+      const b = 1 + Math.sin((t * 2 * Math.PI) / 3) * 0.012;
+      this.av.transform = 'scale(' + b + ',' + (2 - b) + ')';
+      const r = (t % 2.4) / 2.4;
+      this.ringA.opacity = 0.22 * (1 - r); this.ringA.transform = 'scale(' + lerp(0.8, 1.15, r) + ')';
+      this.ringB.opacity = 0.12; this.ringA.transformOrigin = this.ringB.transformOrigin = '540px 1160px';
+      WORLD_TOKENS.forEach((o, i) => {
+        const p = seg(t, o.at, o.at + 0.6);
+        const bob = Math.sin(t * 2.1 + i * 1.7) * 10;
+        this.tok[i].opacity = eo(seg(t, o.at, o.at + 0.25));
+        this.tok[i].transform = 'translateY(' + (bob + lerp(40, 0, eo(p))) + 'px) scale(' + lerp(0.4, 1, eob(p, 1.7)) + ')';
+      });
+      const g = seg(t, 1.5, 2.1);
+      this.gauges.opacity = eo(g);
+      this.gauges.transform = 'translateY(' + lerp(60, 0, eo(g)) + 'px)';
+      [26, 57, 63].forEach((v, i) => { this.bars[i].width = v * eo(seg(t, 1.9 + i * 0.15, 2.9 + i * 0.15)) + '%'; });
+    },
+  });
+})();
+
+// ---- scene: Snap lunch (5 s) ----
+(function () {
+  const { seg, eo, eob, eio, lerp } = kit;
+  kit.scene('snap', {
+    dur: 5, name: 'Snap lunch',
+    init(kit) {
+      const plate = '<svg viewBox="0 0 600 600" style="width:100%;height:100%">' +
+        '<circle cx="300" cy="300" r="280" style="fill:#FFFFFF;stroke:#E4E6E2;stroke-width:6"/>' +
+        '<circle cx="300" cy="300" r="230" style="fill:color-mix(in srgb, var(--ground) 60%, #FFFFFF)"/>' +
+        '<circle cx="220" cy="240" r="105" style="fill:#E2C08F"/><circle cx="250" cy="215" r="96" style="fill:#EBCB98;opacity:.95"/>' +
+        '<circle cx="390" cy="260" r="92" style="fill:color-mix(in srgb, var(--accent) 70%, #F2C14E)"/>' +
+        '<circle cx="390" cy="260" r="92" style="fill:none;stroke:#FFFFFF;stroke-width:10"/>' +
+        '<ellipse cx="310" cy="420" rx="120" ry="62" style="fill:#5E8B3A"/><ellipse cx="280" cy="410" rx="40" ry="14" style="fill:#7FAF52"/><ellipse cx="350" cy="430" rx="38" ry="13" style="fill:#7FAF52"/></svg>';
+      const corner = (s) => '<div style="position:absolute;width:90px;height:90px;' + s + 'border-color:#FFFFFF;border-style:solid;border-width:0"></div>';
+      kit.stage.append(kit.h('<div class="ground">' +
+        '<div class="snap-world" style="position:absolute;inset:0">' + UI.map() + UI.avatar('snap-av') + '</div>' +
+        '<div class="snap-sheet" style="position:absolute;inset:0;background:var(--second)">' +
+        '<div class="snap-plate" style="position:absolute;left:190px;top:560px;width:700px;height:700px">' + plate + '</div>' +
+        '<div class="snap-finder" style="position:absolute;left:140px;top:510px;width:800px;height:800px">' +
+        corner('left:0;top:0;border-left-width:8px;border-top-width:8px;border-top-left-radius:30px;') + corner('right:0;top:0;border-right-width:8px;border-top-width:8px;border-top-right-radius:30px;') +
+        corner('left:0;bottom:0;border-left-width:8px;border-bottom-width:8px;border-bottom-left-radius:30px;') + corner('right:0;bottom:0;border-right-width:8px;border-bottom-width:8px;border-bottom-right-radius:30px;') + '</div>' +
+        '<div class="words" style="left:0;right:0;top:300px;align-items:center"><p class="sub snap-hint" style="color:#FFFFFF">Point at your plate</p></div></div>' +
+        '<div class="snap-white" style="position:absolute;inset:0;background:#FFFFFF"></div>' +
+        '<div class="card snap-card" style="left:60px;top:560px;width:960px;padding:44px;box-sizing:border-box;display:flex;gap:40px;align-items:center">' +
+        '<div style="width:240px;height:240px;flex:none;border-radius:32px;overflow:hidden;background:var(--second)"><div style="width:240px;height:240px;transform:scale(1.25)">' + plate + '</div></div>' +
+        '<div class="words" style="position:static;gap:10px"><p class="sub">Lunch · dal, roti, bhindi</p>' +
+        '<p class="num snap-kcal" style="font-size:150px;line-height:1">520</p><p class="sub">kcal · estimated</p>' +
+        '<p class="snap-pro" style="font-size:40px;font-weight:600;color:var(--accent)">+22 g protein</p></div></div>' +
+        '<div class="snap-btn" style="position:absolute;left:470px;top:1580px;width:140px;height:140px;border-radius:50%;background:var(--second);border:12px solid #FFFFFF;box-sizing:border-box;box-shadow:0 24px 50px rgba(0,0,0,.3)"></div></div>'));
+      const q = (s) => kit.stage.querySelector(s);
+      for (const k of ['world', 'sheet', 'plate', 'finder', 'white', 'card', 'btn', 'hint', 'pro']) this[k] = q('.snap-' + k).style;
+      this.kcal = q('.snap-kcal');
+    },
+    render(t) {
+      const press = seg(t, 0.35, 0.5), release = seg(t, 0.5, 0.75);
+      this.btn.transform = 'scale(' + (1 - 0.1 * eo(press) + 0.1 * eo(release)) + ')';
+      this.btn.opacity = 1 - eo(seg(t, 2.1, 2.4));
+      const up = eio(seg(t, 0.55, 1.15));
+      this.sheet.transform = 'translateY(' + lerp(1920, 0, up) + 'px)';
+      this.world.transform = 'scale(' + lerp(1, 0.94, up) + ')';
+      this.hint.opacity = eo(seg(t, 1.0, 1.3)) * (1 - eo(seg(t, 2.0, 2.2)));
+      this.plate.transform = 'scale(' + lerp(1.08, 1, eo(seg(t, 0.9, 2.0))) + ') rotate(' + lerp(-4, 0, eo(seg(t, 0.9, 2.0))) + 'deg)';
+      this.finder.transform = 'scale(' + (lerp(1.12, 1, eob(seg(t, 1.1, 1.6), 1.5)) - 0.03 * eo(seg(t, 1.95, 2.05))) + ')';
+      this.white.opacity = 0.85 * eo(seg(t, 2.05, 2.15)) * (1 - eo(seg(t, 2.15, 2.75)));
+      const c = seg(t, 2.35, 2.95);
+      this.card.opacity = eo(seg(t, 2.35, 2.55));
+      this.card.transform = 'translateY(' + lerp(120, 0, eo(c)) + 'px) scale(' + lerp(0.9, 1, eob(c, 1.4)) + ')';
+      this.sheet.opacity = 1 - eo(seg(t, 2.3, 2.7));
+      this.kcal.textContent = String(Math.round(lerp(260, 520, eo(seg(t, 2.5, 3.4)))));
+      this.pro.opacity = eo(seg(t, 3.4, 3.7));
+      this.pro.transform = 'translateX(' + lerp(26, 0, eo(seg(t, 3.4, 3.9))) + 'px)';
+    },
+  });
+})();
+
+// ---- scene: Quest done (5 s) ----
+(function () {
+  const { seg, eo, ei, eob, eio, lerp } = kit;
+  const QUEST_TOKENS = [
+    { k: 'egg', cls: '', x: 230, y: 640, tag: 'Protein +20 g' },
+    { k: 'drop', cls: 'blue', x: 860, y: 820, tag: '2 glasses' },
+    { k: 'walk', cls: 'ink', x: 220, y: 1010, tag: 'Walk 15 min' },
+  ];
+  kit.scene('quest', {
+    dur: 5, name: 'Quest done',
+    init(kit) {
+      const color = { '': 'var(--accent)', blue: 'var(--main)', ink: 'var(--second)' };
+      kit.stage.append(kit.h('<div class="ground">' + UI.map() + UI.rings() +
+        '<div class="quest-glow" style="position:absolute;left:290px;top:660px;width:500px;height:560px;border-radius:50%;background:radial-gradient(closest-side, color-mix(in srgb, var(--accent) 45%, transparent), transparent)"></div>' +
+        UI.avatar('quest-av') +
+        QUEST_TOKENS.map((o, i) => '<div class="quest-tok' + i + '" style="position:absolute;left:' + o.x + 'px;top:' + o.y + 'px">' +
+          '<div class="token ' + o.cls + '" style="left:0;top:0">' + UI.icon(o.k, color[o.cls]) + '</div>' +
+          '<div class="tag quest-tag' + i + '" style="left:0;top:96px">' + o.tag + '</div></div>').join('') +
+        '<div class="words quest-xpwrap" style="left:0;right:0;top:560px;align-items:center"><p class="num quest-plus" style="font-size:110px;color:var(--main)">+50 XP</p></div>' +
+        UI.hud('quest') + UI.gauges('quest') + '</div>'));
+      const q = (s) => kit.stage.querySelector(s);
+      this.av = q('.quest-av').style; this.glow = q('.quest-glow').style;
+      this.tok = QUEST_TOKENS.map((_, i) => q('.quest-tok' + i).style);
+      this.ringA = q('.ring-a').style; this.ringA.transformOrigin = '540px 1160px';
+      this.plus = q('.quest-xpwrap').style;
+      this.build = q('.quest-build'); this.buildBar = q('.quest-buildbar').style;
+      this.fuel = q('.quest-fuel'); this.fuelBar = q('.quest-fuelbar').style;
+      q('.quest-movebar').style.width = '63%';
+      this.xp = q('.quest-xp'); this.xpText = q('.quest-xptext');
+    },
+    render(t) {
+      const r = (t % 2.4) / 2.4;
+      this.ringA.opacity = 0.22 * (1 - r); this.ringA.transform = 'scale(' + lerp(0.8, 1.15, r) + ')';
+      QUEST_TOKENS.forEach((o, i) => {
+        const bob = Math.sin((t + 4) * 2.1 + i * 1.7) * 10;
+        if (i !== 0) { this.tok[i].transform = 'translateY(' + bob + 'px)'; return; }
+        const fly = seg(t, 0.7, 1.45);
+        const dip = 1 - 0.08 * eo(seg(t, 0.45, 0.7)) * (1 - seg(t, 0.7, 0.8));
+        const p = ei(fly);
+        const x = lerp(0, 310, p), y = lerp(0, 290, p) - Math.sin(p * Math.PI) * 220;
+        this.tok[0].transform = 'translate(' + x + 'px,' + (y + bob * (1 - fly)) + 'px) scale(' + dip * lerp(1, 0.25, p) + ')';
+        this.tok[0].opacity = 1 - eo(seg(t, 1.35, 1.5));
+      });
+      const hit = seg(t, 1.45, 2.1);
+      const sq = Math.sin(hit * Math.PI) * (1 - hit) * 0.14;
+      const b = 1 + Math.sin(((t + 4) * 2 * Math.PI) / 3) * 0.012;
+      this.av.transform = 'scale(' + (b + sq) + ',' + (2 - b - sq) + ')';
+      this.glow.opacity = eo(seg(t, 1.45, 1.8)) * lerp(1, 0.55, eo(seg(t, 2.2, 4)));
+      this.glow.transform = 'scale(' + lerp(0.6, 1.05, eo(seg(t, 1.45, 2.4))) + ')';
+      const pl = seg(t, 1.7, 2.3);
+      this.plus.opacity = eo(pl) * (1 - eo(seg(t, 3.4, 3.9)));
+      this.plus.transform = 'translateY(' + (lerp(50, 0, eo(pl)) - lerp(0, 60, eio(seg(t, 2.3, 3.9)))) + 'px) scale(' + lerp(0.6, 1, eob(pl, 1.8)) + ')';
+      const fill = eo(seg(t, 1.6, 2.8));
+      this.build.textContent = Math.round(lerp(34, 56, fill)) + ' g';
+      this.buildBar.width = lerp(57, 93, fill) + '%';
+      this.fuel.textContent = String(Math.round(lerp(380, 900, fill)));
+      this.fuelBar.width = lerp(26, 62, fill) + '%';
+      const xp = eo(seg(t, 2.0, 3.0));
+      this.xp.setAttribute('stroke-dashoffset', String(lerp(75, 64, xp)));
+      this.xpText.textContent = Math.round(lerp(640, 690, xp)) + ' / 1000 XP';
+    },
+  });
+})();
+
+// ---- scene: Level up (6 s) ----
+(function () {
+  const { seg, eo, eob, eio, lerp, TextFx } = kit;
+  const LV_TOKENS = [
+    { k: 'drop', cls: 'blue', x: 860, y: 820, tag: '2 glasses', i: 1 },
+    { k: 'walk', cls: 'ink', x: 220, y: 1010, tag: 'Walk 15 min', i: 2 },
+  ];
+  kit.scene('levelup', {
+    dur: 6, name: 'Level up',
+    init(kit) {
+      const color = { blue: 'var(--main)', ink: 'var(--second)' };
+      kit.stage.append(kit.h('<div class="ground">' +
+        '<div class="levelup-world" style="position:absolute;inset:0">' + UI.map() + UI.rings() +
+        LV_TOKENS.map((o, n) => '<div class="levelup-tok' + n + '" style="position:absolute;left:' + o.x + 'px;top:' + o.y + 'px">' +
+          '<div class="token ' + o.cls + '" style="left:0;top:0">' + UI.icon(o.k, color[o.cls]) + '</div>' +
+          '<div class="tag" style="left:0;top:96px">' + o.tag + '</div></div>').join('') +
+        UI.hud('levelup') + UI.gauges('levelup') + '</div>' +
+        '<svg class="art" viewBox="0 0 1080 1920"><circle class="halo levelup-w1" cx="540" cy="930" r="200" stroke-width="10"/><circle class="halo levelup-w2" cx="540" cy="930" r="200" stroke-width="6"/></svg>' +
+        UI.avatar('levelup-av') +
+        '<div class="words levelup-badge" style="left:0;right:0;top:560px;align-items:center"><p class="line" style="color:var(--main)">Level 8</p></div>' +
+        '<div class="words levelup-end" style="left:90px;right:90px;top:1180px;align-items:center;text-align:center">' +
+        '<h1 class="line levelup-name" style="font-size:190px">Hoppy</h1>' +
+        '<p class="sub levelup-tag" style="font-size:46px">Your food powers you.</p>' +
+        '<div class="levelup-under" style="width:240px;height:12px;border-radius:12px;background:var(--accent);transform-origin:0 50%"></div></div></div>'));
+      const q = (s) => kit.stage.querySelector(s);
+      for (const k of ['world', 'av', 'badge', 'end', 'tag', 'under', 'w1', 'w2']) this[k] = q('.levelup-' + k).style;
+      this.name = q('.levelup-name');
+      this.tok = LV_TOKENS.map((_, n) => q('.levelup-tok' + n).style);
+      q('.levelup-fuelbar').style.width = '62%'; q('.levelup-buildbar').style.width = '93%'; q('.levelup-movebar').style.width = '63%';
+      q('.levelup-fuel').textContent = '900'; q('.levelup-build').textContent = '56 g';
+      this.xp = q('.levelup-xp'); this.xpText = q('.levelup-xptext'); this.lv = q('.levelup-lv');
+      this.w1.transformOrigin = this.w2.transformOrigin = '540px 930px';
+    },
+    render(t) {
+      LV_TOKENS.forEach((o, n) => { this.tok[n].transform = 'translateY(' + Math.sin((t + 9) * 2.1 + o.i * 1.7) * 10 + 'px)'; });
+      const fillXp = eio(seg(t, 0.2, 0.9));
+      this.xp.setAttribute('stroke-dashoffset', String(lerp(64, 0, fillXp)));
+      const flip = seg(t, 0.85, 1.05);
+      this.lv.textContent = t < 0.95 ? 'Level 7' : 'Level 8';
+      this.lv.style.opacity = Math.abs(flip - 0.5) * 2;
+      this.xpText.textContent = t < 0.95 ? Math.round(lerp(690, 1000, fillXp)) + ' / 1000 XP' : '0 / 1200 XP';
+      const ant = eo(seg(t, 0.6, 0.8)) * (1 - seg(t, 0.8, 0.9));
+      const grow = eob(seg(t, 0.85, 1.5), 1.6);
+      const b = 1 + Math.sin(((t + 9) * 2 * Math.PI) / 3) * 0.012;
+      const shrink = eio(seg(t, 2.6, 3.3));
+      const s = (lerp(1, 1.12, grow) - 0.05 * ant) * lerp(1, 0.62, shrink);
+      this.av.transform = 'translateY(' + lerp(0, -330, shrink) + 'px) scale(' + s * b + ',' + s * (2 - b) + ')';
+      [this.w1, this.w2].forEach((w, i) => {
+        const p = seg(t, 0.95 + i * 0.25, 2.0 + i * 0.25);
+        w.opacity = 0.5 * (1 - p) * (p > 0 ? 1 : 0);
+        w.transform = 'scale(' + lerp(0.8, 2.3, eo(p)) + ')';
+      });
+      const bp = seg(t, 1.0, 1.5);
+      this.badge.opacity = eo(bp) * (1 - eo(seg(t, 2.4, 2.7)));
+      this.badge.transform = 'translateY(' + lerp(40, 0, eo(bp)) + 'px) scale(' + lerp(0.7, 1, eob(bp, 1.7)) + ')';
+      this.world.opacity = 1 - eo(seg(t, 2.5, 3.0));
+      this.world.transform = 'scale(' + lerp(1, 0.96, eio(seg(t, 2.5, 3.2))) + ')';
+      this.end.opacity = t < 2.9 ? 0 : 1;
+      TextFx.fadeFromRight(this.name, t, 3.0, { dx: 30 });
+      this.tag.opacity = eo(seg(t, 3.5, 3.9));
+      this.tag.transform = 'translateX(' + lerp(26, 0, eo(seg(t, 3.5, 4.0))) + 'px)';
+      this.under.transform = 'scaleX(' + eo(seg(t, 3.9, 4.35)) + ')';
+      this.end.transform = 'translateY(' + -lerp(0, 8, seg(t, 4.3, 6)) + 'px)';
+    },
+  });
+})();
+
+// ---- the player ----
+const stage = document.getElementById('stage');
+const frame = document.getElementById('frame');
+let start = 0;
+const built = SCENES.map((s) => {
+  const box = document.createElement('div');
+  box.className = 'scene';
+  stage.appendChild(box);
+  const sk = Object.assign(Object.create(KIT), { stage: box, dur: s.def.dur });
+  s.def.init(sk);
+  const entry = { ...s, box, start, dur: s.def.dur };
+  start += s.def.dur;
+  return entry;
+});
+const TOTAL = start;
+
+const chips = document.getElementById('chips');
+built.forEach((s) => {
+  const b = document.createElement('button');
+  b.textContent = s.def.name; b.dataset.id = s.id;
+  b.onclick = () => { pause(); show(s.start + 0.001); };
+  chips.appendChild(b);
+});
+
+function fit() {
+  const vp = frame.parentElement.getBoundingClientRect();
+  const k = Math.min(vp.height / 1920, vp.width / 1080);
+  stage.style.transform = 'scale(' + k + ')';
+  frame.style.width = 1080 * k + 'px';
+  frame.style.height = 1920 * k + 'px';
+}
+window.addEventListener('resize', fit);
+
+const scrub = document.getElementById('scrub');
+const time = document.getElementById('time');
+scrub.max = TOTAL;
+function show(t) {
+  t = Math.max(0, Math.min(TOTAL, t));
+  const cur = built.find((s) => t < s.start + s.dur) || built[built.length - 1];
+  built.forEach((s) => { s.box.style.display = s === cur ? '' : 'none'; });
+  cur.def.render.call(cur.def, t - cur.start);
+  scrub.value = t;
+  time.textContent = t.toFixed(2) + ' / ' + TOTAL.toFixed(2) + ' s';
+  [...chips.children].forEach((c) => c.setAttribute('aria-pressed', String(c.dataset.id === cur.id)));
+  now = t;
+}
+
+let now = 0, playing = false, last = 0;
+const play = document.getElementById('play');
+function loop(ts) {
+  if (!playing) return;
+  now += (ts - last) / 1000; last = ts;
+  if (now >= TOTAL) { now = TOTAL; pause(); }
+  show(now);
+  if (playing) requestAnimationFrame(loop);
+}
+function pause() { playing = false; play.textContent = 'Play'; play.setAttribute('aria-label', 'Play'); }
+play.onclick = () => {
+  if (playing) return pause();
+  if (now >= TOTAL) now = 0;
+  playing = true; play.textContent = 'Pause'; play.setAttribute('aria-label', 'Pause');
+  last = performance.now(); requestAnimationFrame(loop);
+};
+scrub.oninput = () => { pause(); show(Number(scrub.value)); };
+// Built and fitted once fonts are in, then autoplay.
+document.fonts.ready.then(() => { fit(); show(0); play.click(); });
+fit(); show(0);
+</script>
+</body>
+</html>
