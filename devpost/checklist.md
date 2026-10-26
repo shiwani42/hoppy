@@ -99,7 +99,7 @@ Build mode: fast (learner asked to finish everything end to end locally before t
   Learner check: Open the calendar and tap yesterday. Is everything you logged there?
   Commit: `Diet calendar and day history`
 
-- [ ] **10. Streaks and milestone cards**
+- [x] **10. Streaks and milestone cards**
   Becomes usable: Your streak shows on home and the share card. Hitting a stage-up, every 2 kg toward your goal, or a 7/30/100-day streak offers a milestone share card.
   Why now: Builds on share cards (slice 8) and stages (slice 7) to make posting a recurring journey.
   PRD ref: `prd.md > Streaks`, `prd.md > Milestone Share Cards`
