@@ -245,3 +245,30 @@ export function Toast({ children }: { children: ReactNode }) {
 export function Loading({ label = "Hoppy…" }: { label?: string }) {
   return <main className="flex flex-1 items-center justify-center font-display text-xl text-ink-soft">{label}</main>;
 }
+
+/** A soft progress ring with content in the middle (Home's calories, protein and water). */
+export function Ring({ value, color, track, size = 96, stroke = 10, children, label }: { value: number; color: string; track: string; size?: number; stroke?: number; children?: ReactNode; label: string }) {
+  const r = (size - stroke) / 2;
+  const c = 2 * Math.PI * r;
+  const v = Math.max(0, Math.min(100, value));
+  return (
+    <div className="relative" style={{ width: size, height: size }} role="meter" aria-label={label} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(v)}>
+      <svg width={size} height={size} className="-rotate-90" aria-hidden>
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={track} strokeWidth={stroke} />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          stroke={color}
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          strokeDasharray={c}
+          strokeDashoffset={c * (1 - Math.max(v, 2) / 100)}
+          style={{ transition: "stroke-dashoffset 900ms cubic-bezier(.3,1.2,.5,1)" }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-center">{children}</div>
+    </div>
+  );
+}

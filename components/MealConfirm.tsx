@@ -36,6 +36,7 @@ export function MealConfirm({
   demo,
   transcript,
   editing,
+  onDelete,
   onConfirm,
   onClose,
 }: {
@@ -45,6 +46,7 @@ export function MealConfirm({
   demo?: boolean;
   transcript?: string;
   editing?: boolean;
+  onDelete?: () => Promise<void> | void;
   onConfirm: (items: MealItem[], type: MealType) => Promise<void> | void;
   onClose: () => void;
 }) {
@@ -174,6 +176,11 @@ export function MealConfirm({
           {!adding && (
             <button onClick={() => setAdding(true)} className="mt-3 h-11 w-full font-display text-[18px] font-semibold text-ink-faint">
               Add something else
+            </button>
+          )}
+          {onDelete && (
+            <button onClick={() => onDelete()} className="h-11 w-full font-display text-[16px] font-semibold text-strength">
+              Remove this meal
             </button>
           )}
         </div>

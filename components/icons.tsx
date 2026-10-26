@@ -86,6 +86,7 @@ export const IconWalk = (p: P) => (
     <path d="M9 21l2.5-6.5L14 17v4M8 12l2-4.5 4 1.5 2 3.5M11.5 14.5L13 9" />
   </Line>
 );
+export const IconChat = (p: P) => <Line {...p}><path d="M5 5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-8l-5 4v-4H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z" /><path d="M8 10h8M8 13h5" /></Line>;
 export const IconDrop = (p: P) => <Line {...p}><path d="M12 3c3.4 4.4 6 8 6 11.2a6 6 0 0 1-12 0C6 11 8.6 7.4 12 3z" /></Line>;
 
 /** Filled, coloured stat icons with a soft highlight (Strength, Muscle, …). */

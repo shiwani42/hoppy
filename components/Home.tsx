@@ -5,18 +5,19 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AppMenu } from "@/components/AppMenu";
 import { Confetti, Medallion, TwinArt, ensureTwinArt, loadTwin, type Twin } from "@/components/art";
-import { IconCamera, IconMic, IconSend } from "@/components/icons";
+import { ChatOverlay } from "@/components/ChatOverlay";
+import { FoodSticker } from "@/components/art";
+import { IconCalendar, IconCamera, IconChat, IconMic } from "@/components/icons";
 import { MealConfirm } from "@/components/MealConfirm";
 import { ASK, QuestionScreen, type DripAnswer } from "@/components/QuestionScreen";
-import { ActivityEntry, AnswerCard, MealEntry, PromptBubble, ReplyCard, UserBubble } from "@/components/Thread";
-import { Toast } from "@/components/ui";
+import { Ring, Toast } from "@/components/ui";
 import { VoiceLog, type VoiceResult } from "@/components/VoiceLog";
 import { STAGE_BODIES } from "@/lib/ai/prompts";
 import { askHoppy, loadChat, saveNudge, type ChatMsg } from "@/lib/chat/client";
 import { acceptInvite, loadNewCheers, markCheersSeen, PENDING_INVITE, type Cheer } from "@/lib/community/client";
 import { MEAL_REMINDERS, NOT_FOOD, NUDGES, nudgeKeyOf, pick } from "@/lib/copy/voice";
 import { resizeImage } from "@/lib/image";
-import { addWater, deleteActivity, saveActivity, saveSleep, saveWeight, type SavedActivity } from "@/lib/logs/client";
+import { addWater, saveActivity, saveSleep, saveWeight } from "@/lib/logs/client";
 import {
   deleteMeal, mealTotals, saveMeal, setMealReply, startOfDay, streamMealReply, toEditable, updateMeal,
   type SavedMeal,
@@ -30,6 +31,8 @@ import { loadReminders, missedMeal } from "@/lib/reminders/client";
 import { dueMilestone, type Milestone } from "@/lib/rules/milestones";
 import { nudgeFor } from "@/lib/rules/nudges";
 import { goalProgress } from "@/lib/share/data";
+import { mealArt } from "@/lib/art";
+import { activityByKey } from "@/lib/rules/activity";
 import { progressFor, stageUp } from "@/lib/stages/client";
 import { loadStreak } from "@/lib/stats/streak";
 import { dateKey, loadToday, saveSnapshot, type Today } from "@/lib/stats/today";
@@ -75,10 +78,9 @@ export function Home() {
   const [toast, setToast] = useState<string | null>(null);
   const [burst, setBurst] = useState(0);
   const [camMenu, setCamMenu] = useState(false);
-  const [text, setText] = useState("");
+  const [chatOpen, setChatOpen] = useState(false);
 
   const nudging = useRef(false);
-  const thread = useRef<HTMLDivElement>(null);
   const camera = useRef<HTMLInputElement>(null);
   const gallery = useRef<HTMLInputElement>(null);
   const meals = today?.meals ?? [];
@@ -231,14 +233,6 @@ export function Home() {
     return () => clearTimeout(t);
   }, [toast]);
 
-  // Keep the newest message in view, like a chat (instantly on open, smoothly after).
-  const scrolled = useRef(false);
-  useEffect(() => {
-    const el = thread.current;
-    if (!el || !today) return;
-    el.scrollTo({ top: el.scrollHeight, behavior: scrolled.current ? "smooth" : "auto" });
-    scrolled.current = true;
-  }, [today, meals.length, chat.length, pending, reading, question, replies, cheers.length, milestone]);
 
   async function onPhoto(file: File | Blob, sample = false) {
     setReading(true);
@@ -407,11 +401,49 @@ export function Home() {
 
   const stage = profile.current_stage;
   const firstName = profile.name?.split(" ")[0] ?? "";
-  const empty = meals.length === 0 && !today?.activities.length && !reading && !chat.length;
-  const waterPct = today ? Math.min(100, (today.totals.waterMl / (today.targets.waterMl || 2500)) * 100) : 0;
+  const waterMl = today?.totals.waterMl ?? 0;
+  const waterTarget = today?.targets.waterMl || 2500;
+  const waterPct = Math.min(100, (waterMl / waterTarget) * 100);
+  const lastMeal = meals.at(-1);
+  const nudge = [...chat].reverse().find((c) => c.kind === "nudge");
+  const openReminder = reminder && !meals.some((m) => m.meal_type === reminder) ? reminder : null;
+
+  // The twin says one thing at a time, most timely first.
+  const line: { text: React.ReactNode; onClick?: () => void; action?: React.ReactNode; testid?: string } | null = reading
+    ? { text: <span className="animate-pulse">Reading your plate…</span> }
+    : lastMeal && replies[lastMeal.id]
+      ? { text: replies[lastMeal.id] }
+      : question
+        ? {
+            text: ASK[question.id].short,
+            onClick: () => setAsking(true),
+            action: (
+              <button onClick={(e) => { e.stopPropagation(); skipQuestion(); }} className="font-normal text-ink-soft">
+                (Skip)
+              </button>
+            ),
+          }
+        : openReminder
+          ? { text: MEAL_REMINDERS[openReminder], testid: "reminder", action: <button onClick={dismissReminder} className="font-normal text-ink-soft">(Dismiss)</button> }
+          : snoozed[0]
+            ? { text: snoozed[0].body, onClick: () => router.push(snoozed[0].url), action: <span className="font-normal text-teal">(Open)</span> }
+            : cheers[0]
+              ? { text: <>👏 <b>{cheers[0].name ?? "A friend"}</b> sent you a Shabaash! Keep going.</> }
+              : nudge
+                ? { text: nudge.content }
+                : lastMeal?.reply
+                  ? { text: lastMeal.reply }
+                  : meals.length === 0
+                    ? { text: `What did you last eat, ${firstName}? Snap it or tell me 🍽️` }
+                    : null;
+
+  const kcalTarget = today?.targets.calories ?? null;
+  const proteinTarget = today?.targets.proteinG ?? null;
+  const kcalIn = Math.round(today?.totals.kcalIn ?? 0);
+  const protein = Math.round(today?.totals.proteinG ?? 0);
 
   return (
-    <main className="relative flex h-dvh flex-col overflow-hidden">
+    <main className="relative flex min-h-dvh flex-col pb-[150px]">
       <input ref={camera} type="file" accept="image/*" capture="environment" hidden data-testid="meal-photo-input"
         onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) onPhoto(f); }} />
       <input ref={gallery} type="file" accept="image/*" hidden
@@ -419,92 +451,84 @@ export function Home() {
 
       <header className="relative z-10 px-5 pt-[max(1rem,env(safe-area-inset-top))]">
         <div className="flex items-center justify-between">
-          <Link href="/water" aria-label={`Water: ${Math.round(waterPct)}% of today's target`} className="relative flex h-10 w-10 items-center justify-center rounded-full border border-line bg-card shadow-[0_1px_2px_rgb(60_40_10/0.06)] active:scale-95">
-            <svg width="18" height="22" viewBox="0 0 18 22" aria-hidden>
-              <defs><clipPath id="mini-glass"><path d="M1.5 1h15l-1.8 19.2a1 1 0 0 1-1 .8H4.3a1 1 0 0 1-1-.8z" /></clipPath></defs>
-              <rect x="0" y={22 - (waterPct / 100) * 21} width="18" height="22" fill="var(--color-hydration)" clipPath="url(#mini-glass)" className="transition-all duration-700" />
-              <path d="M1.5 1h15l-1.8 19.2a1 1 0 0 1-1 .8H4.3a1 1 0 0 1-1-.8z" fill="none" stroke="var(--color-ink)" strokeWidth="1.6" strokeLinejoin="round" />
-            </svg>
+          <Link href="/calendar" aria-label="History" className="flex h-10 w-10 items-center justify-center rounded-full border border-line bg-card text-ink shadow-[0_1px_2px_rgb(60_40_10/0.06)] active:scale-95">
+            <IconCalendar size={20} />
           </Link>
           <AppMenu />
         </div>
         <h1 className="-mt-4 text-center font-display text-[30px] leading-tight font-extrabold tracking-[-0.01em]">Namaste, {firstName}!</h1>
       </header>
 
-      <section className="relative z-0 mt-2 h-[236px] shrink-0" aria-label="Your twin">
+      {/* The twin is the hero: big, floating, with confetti; tap for today's stats. */}
+      <section className="relative z-0 mt-1 h-[236px] shrink-0" aria-label="Your twin">
+        <div aria-hidden className="absolute top-8 left-1/2 h-[220px] w-[220px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle_at_50%_45%,rgb(247_226_195/0.9),rgb(247_226_195/0)_70%)]" />
         <Confetti burst={burst} still={!burst} count={burst ? 30 : 18} spread={burst ? 170 : 150} />
         <Link href="/today" aria-label="See today's stats" className={`absolute left-1/2 top-0 block -translate-x-1/2 ${burst ? "animate-pop" : ""}`} key={burst}>
           <TwinArt twin={twin} pose="bust" stage={stage} className="h-[236px] w-[224px]" float />
         </Link>
         {streakDays > 0 && (
-          <Link href={`/share/milestone?type=streak&value=${streakDays}&celebrate=1`} className="absolute top-[118px] left-4 rounded-full bg-card px-3 py-1.5 font-display text-[15px] font-bold shadow-card" data-testid="streak">
-            🔥 {streakDays}
+          <Link href={`/share/milestone?type=streak&value=${streakDays}&celebrate=1`} className="absolute top-[112px] left-4 flex flex-col items-center rounded-[18px] bg-card px-3 py-2 shadow-card" data-testid="streak">
+            <span className="text-[22px] leading-none" aria-hidden>🔥</span>
+            <span className="font-display text-[18px] leading-tight font-extrabold">{streakDays}</span>
+            <span className="text-[11px] leading-none text-ink-soft">day streak</span>
           </Link>
         )}
-        <Link href="/journey" className="absolute top-[118px] right-3 w-[84px] text-center font-display text-[15px] leading-tight font-semibold text-ink" aria-label={`${STAGE_BODIES[stage].name} stage — see your journey`}>
+        <Link href="/journey" className="absolute top-[104px] right-3 w-[84px] text-center font-display text-[15px] leading-tight font-semibold text-ink" aria-label={`${STAGE_BODIES[stage].name} stage — see your journey`}>
           <svg width="22" height="22" viewBox="0 0 22 22" className="mx-auto -mb-0.5" aria-hidden><path d="M4 18 C 6 10, 10 6, 16 4 M16 4 l-5 0 M16 4 l-1 5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
           <span className="block rotate-[8deg]">{STAGE_BODIES[stage].name}<br />stage</span>
           <svg width="22" height="22" viewBox="0 0 22 22" className="mx-auto -mt-0.5" aria-hidden><path d="M16 4 C 14 12, 10 16, 5 18 M5 18 l5 1 M5 18 l1 -5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
         </Link>
       </section>
 
-      <div
-        ref={thread}
-        className="relative z-10 -mt-8 flex flex-1 flex-col gap-3 overflow-y-auto px-5 pt-8 pb-4 no-scrollbar [mask-image:linear-gradient(to_bottom,transparent,black_28px)] [&>*]:shrink-0"
-        aria-label="Today"
-      >
-        <div className="mt-auto" />
-        {empty && <ReplyCard>What did you last eat, {firstName}? Snap it or tell me. 🍽️</ReplyCard>}
-        {cheers.map((c) => (
-          <ReplyCard key={c.id}>👏 <strong>{c.name ?? "A friend"}</strong> sent you a Shabaash! Keep going.</ReplyCard>
-        ))}
-        {timeline(meals, today?.activities ?? [], chat).map((entry) =>
-          entry.kind === "chat" ? (
-            entry.c.role === "user" ? <UserBubble key={entry.c.id}>{entry.c.content}</UserBubble> : <AnswerCard key={entry.c.id} content={entry.c.content} stat={entry.c.stat} nudge={entry.c.kind === "nudge"} />
-          ) : entry.kind === "activity" ? (
-            <ActivityEntry key={entry.a.id} a={entry.a} onDelete={async () => { await deleteActivity(entry.a.id); await refresh(profile); }} />
-          ) : (
-            <MealEntry
-              key={entry.m.id}
-              meal={entry.m}
-              reply={replies[entry.m.id]}
-              onEdit={() => setDraft({ key: Date.now(), items: entry.m.meal_items.map(toEditable), type: entry.m.meal_type, source: entry.m.source, editing: entry.m, previewUrl: entry.m.photo_url })}
-              onDelete={async () => { await deleteMeal(entry.m.id); await refresh(profile); }}
-            />
-          ),
-        )}
-        {pending && (
-          <>
-            <UserBubble>{pending.q}</UserBubble>
-            <AnswerCard content={pending.a} />
-          </>
-        )}
-        {reading && (
-          <ReplyCard>
-            <span className="inline-block animate-pulse">Reading your plate…</span>
-          </ReplyCard>
-        )}
-        {reminder && !meals.some((m) => m.meal_type === reminder) && (
-          <PromptBubble
-            label="Reminder"
-            action={<button onClick={dismissReminder} className="font-normal text-ink-soft">(Dismiss)</button>}
+      <div className="relative z-10 -mt-6 flex flex-col gap-4 px-5">
+        {line && (
+          <div
+            role={line.onClick ? "button" : "status"}
+            tabIndex={line.onClick ? 0 : undefined}
+            onClick={line.onClick}
+            onKeyDown={(e) => line.onClick && (e.key === "Enter" || e.key === " ") && line.onClick()}
+            data-testid={line.testid}
+            aria-label={line.onClick ? "A note from your twin" : undefined}
+            className={`relative mx-auto max-w-[340px] rounded-[22px] bg-card px-5 py-2.5 text-center shadow-card animate-fade-up ${line.onClick ? "cursor-pointer active:scale-[.99]" : ""}`}
           >
-            <span data-testid="reminder">{MEAL_REMINDERS[reminder]}</span>
-          </PromptBubble>
+            <svg aria-hidden width="24" height="14" viewBox="0 0 24 14" className="absolute -top-3 left-1/2 -translate-x-1/2"><path d="M0 14 C8 10 10 4 12 0 C14 4 16 10 24 14 Z" fill="#fff" /></svg>
+            <p className="font-display text-[17px] leading-snug font-semibold">{line.text} {line.action}</p>
+          </div>
         )}
-        {snoozed.map((s) => (
-          <PromptBubble key={s.id} label="Reminder" onClick={() => router.push(s.url)} action={<span className="font-normal text-teal">(Open)</span>}>
-            {s.body}
-          </PromptBubble>
-        ))}
+
+        {/* Today at a glance: three big rings, no small print. */}
+        <div className="grid grid-cols-3 gap-2" aria-label="Today">
+          <Link href="/today" className="flex flex-col items-center gap-1 rounded-[22px] bg-energy-soft py-2.5 active:scale-[.98]">
+            <Ring value={kcalTarget ? (kcalIn / kcalTarget) * 100 : 0} color="var(--color-energy)" track="rgb(255 255 255 / 0.7)" label="Calories eaten" size={78} stroke={8}>
+              <span className="font-display text-[19px] leading-none font-extrabold">{kcalIn}</span>
+              <span className="text-[11px] text-ink-soft">kcal</span>
+            </Ring>
+            <span className="font-display text-[15px] font-bold">Calories</span>
+          </Link>
+          <Link href="/today" className="flex flex-col items-center gap-1 rounded-[22px] bg-muscle-soft py-2.5 active:scale-[.98]">
+            <Ring value={proteinTarget ? (protein / proteinTarget) * 100 : 0} color="var(--color-muscle)" track="rgb(255 255 255 / 0.7)" label="Protein" size={78} stroke={8}>
+              <span className="font-display text-[19px] leading-none font-extrabold">{protein}g</span>
+              <span className="text-[11px] text-ink-soft">{proteinTarget ? `of ${proteinTarget}` : "protein"}</span>
+            </Ring>
+            <span className="font-display text-[15px] font-bold">Protein</span>
+          </Link>
+          <button onClick={async () => { await addWater(250); await refresh(profile); react(); }} aria-label={`Add a glass of water — ${(waterMl / 1000).toFixed(1)} of ${(waterTarget / 1000).toFixed(1)} litres today`}
+            className="flex flex-col items-center gap-1 rounded-[22px] bg-hydration-soft py-2.5 active:scale-[.98]">
+            <Ring value={waterPct} color="var(--color-hydration)" track="rgb(255 255 255 / 0.7)" label="Water" size={78} stroke={8}>
+              <span className="font-display text-[19px] leading-none font-extrabold">{(waterMl / 1000).toFixed(1)}L</span>
+              <span className="text-[11px] text-ink-soft">of {(waterTarget / 1000).toFixed(1)}</span>
+            </Ring>
+            <span className="font-display text-[15px] font-bold">+ 1 glass</span>
+          </button>
+        </div>
+
         {milestone && (
-          <div className="mr-4 flex items-center gap-3 self-start rounded-[22px] bg-card p-3 pr-4 shadow-card animate-pop" role="status" data-testid="milestone">
+          <div className="flex items-center gap-3 rounded-[22px] bg-card p-3 pr-4 shadow-card animate-pop" role="status" data-testid="milestone">
             <Medallion label={milestone.type === "streak" ? `${milestone.value} DAYS` : milestone.type === "weight" ? `−${milestone.value} KG` : `STAGE ${milestone.value}`} size={72} />
             <div className="flex-1">
               <p className="font-display text-[19px] leading-tight font-bold">
                 {milestone.type === "streak" ? `${milestone.value}-day streak!` : milestone.type === "weight" ? `${milestone.value} kg lighter!` : `Stage ${milestone.value}!`}
               </p>
-              <p className="text-[14px] text-ink-soft">That&apos;s worth showing off.</p>
               <div className="mt-1.5 flex gap-3 font-display text-[15px] font-bold">
                 <Link href={`/share/milestone?type=${milestone.type}&value=${milestone.value}&celebrate=1`} onClick={() => markMilestone(milestone)} className="text-teal">See badge ↗</Link>
                 <button onClick={() => markMilestone(milestone)} className="text-ink-faint">Not now</button>
@@ -512,76 +536,77 @@ export function Home() {
             </div>
           </div>
         )}
-        {question && (
-          <PromptBubble
-            label="A question from your twin"
-            onClick={() => setAsking(true)}
-            action={
-              <button onClick={(e) => { e.stopPropagation(); skipQuestion(); }} className="font-normal text-ink-soft">
-                (Skip)
-              </button>
-            }
-          >
-            {ASK[question.id].short}
-          </PromptBubble>
-        )}
+
+        {/* Your plate today: the day as big food stickers. */}
+        <section aria-label="Your plate today">
+          <div className="flex items-baseline justify-between">
+            <h2 className="font-display text-[20px] font-bold">Your plate today</h2>
+            <Link href="/move" className="font-display text-[15px] font-bold text-strength">+ Exercise</Link>
+          </div>
+          {meals.length || today?.activities.length ? (
+            <div className="no-scrollbar -mx-5 mt-2 flex gap-4 overflow-x-auto px-5 pb-2">
+              {meals.map((m) => {
+                const art = mealArt(m.meal_items);
+                return (
+                  <button key={m.id} data-testid="meal-card"
+                    onClick={() => setDraft({ key: Date.now(), items: m.meal_items.map(toEditable), type: m.meal_type, source: m.source, editing: m, previewUrl: m.photo_url })}
+                    className="flex w-[86px] shrink-0 flex-col items-center text-center active:scale-[.97]">
+                    {/* eslint-disable-next-line @next/next/no-img-element -- signed Storage URL */}
+                    {m.photo_url ? <img src={m.photo_url} alt="" className="h-[76px] w-[76px] rounded-full border-[4px] border-white object-cover shadow-[0_6px_14px_rgb(60_40_10/0.18)]" /> : <FoodSticker src={art.src} emoji={art.emoji} size={76} />}
+                    <span className="mt-1.5 font-display text-[15px] leading-tight font-bold capitalize">{m.meal_type}</span>
+                    <span className="text-[13px] text-ink-soft">{Math.round(mealTotals(m).kcal)} kcal</span>
+                  </button>
+                );
+              })}
+              {today?.activities.map((a) => (
+                <Link key={a.id} href="/move" className="flex w-[86px] shrink-0 flex-col items-center text-center">
+                  <span className="flex h-[76px] w-[76px] items-center justify-center rounded-full border-[4px] border-white bg-strength-soft text-[38px] shadow-[0_6px_14px_rgb(60_40_10/0.14)]" aria-hidden>{activityByKey(a.activity_key)?.emoji ?? "🏃"}</span>
+                  <span className="mt-1.5 line-clamp-1 font-display text-[15px] leading-tight font-bold">{a.label.split(" (")[0]}</span>
+                  <span className="text-[13px] text-ink-soft">{Number(a.minutes)} min</span>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <button onClick={() => setCamMenu(true)} className="mt-2 flex w-full items-center gap-4 rounded-[22px] border-2 border-dashed border-[#e2d5bd] px-4 py-4 text-left active:scale-[.99]">
+              <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-card text-[28px] shadow-card" aria-hidden>🍽️</span>
+              <span className="font-display text-[17px] leading-snug font-semibold text-ink-soft">Your first meal of the day goes here</span>
+            </button>
+          )}
+        </section>
       </div>
 
-      <form
-        onSubmit={async (e) => {
-          e.preventDefault();
-          const t = text.trim();
-          if (!t) return;
-          setText("");
-          await onText(t);
-        }}
-        className="relative z-20 flex items-center gap-1.5 bg-cream px-4 pt-2 pb-[max(1rem,env(safe-area-inset-bottom))]"
-      >
-        <button type="button" onClick={() => setCamMenu((v) => !v)} aria-label="Snap a meal" aria-expanded={camMenu} className="flex h-11 w-10 shrink-0 items-center justify-center text-ink active:scale-95">
-          <IconCamera size={26} />
-        </button>
-        <button type="button" onClick={() => { setVoice(true); if (twin) ensureTwinArt(twin, { poses: ["wave"] }).then((t) => t && setTwin(t)).catch(() => {}); }} aria-label="Speak a log" className="flex h-11 w-9 shrink-0 items-center justify-center text-ink active:scale-95">
-          <IconMic size={25} />
-        </button>
-        <input
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          placeholder="Log a meal or ask…"
-          aria-label="Log or ask"
-          enterKeyHint="send"
-          className="h-12 min-w-0 flex-1 rounded-full bg-[#ebe6dc] px-4 text-[16px] outline-none placeholder:text-[#a59d90] focus:bg-[#e6e0d4]"
-        />
-        {text.trim() ? (
-          <button aria-label="Send" className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-teal text-white active:scale-95">
-            <IconSend size={22} />
+      {/* The dock: speak, snap (the main action), and chat as a button. */}
+      <nav aria-label="Log" className="fixed inset-x-0 bottom-0 z-30 mx-auto max-w-md bg-[linear-gradient(to_top,var(--color-cream)_60%,rgb(251_245_233/0))] px-6 pt-6 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+        <div className="relative flex items-end justify-center gap-8">
+          <button onClick={() => { setVoice(true); if (twin) ensureTwinArt(twin, { poses: ["wave"] }).then((t) => t && setTwin(t)).catch(() => {}); }} aria-label="Speak a log" className="flex flex-col items-center gap-1 active:scale-95">
+            <span className="flex h-14 w-14 items-center justify-center rounded-full border border-line bg-card shadow-card"><IconMic size={24} /></span>
+            <span className="font-display text-[13px] font-semibold">Say it</span>
           </button>
-        ) : (
-          <Link href="/today" className="flex h-12 shrink-0 items-center rounded-full bg-[#efe3cf] px-4 font-display text-[17px] font-bold text-ink active:scale-95">
-            Today
-          </Link>
-        )}
-
-        {camMenu && (
-          <div className="absolute bottom-[calc(100%+4px)] left-4 w-[230px] overflow-hidden rounded-[18px] bg-card shadow-lift animate-fade-up" role="menu">
-            {[
-              ["Take a photo", () => camera.current?.click()],
-              ["Choose from gallery", () => gallery.current?.click()],
-              ["Search for a dish", () => setDraft({ key: Date.now(), items: [], type: mealTypeFor(), source: "manual" })],
-              ["Try a sample meal", sampleMeal],
-            ].map(([label, fn]) => (
-              <button
-                key={label as string}
-                type="button"
-                role="menuitem"
-                onClick={() => { setCamMenu(false); (fn as () => void)(); }}
-                className="block w-full border-b border-[#f3ecdf] px-4 py-3.5 text-left font-display text-[17px] font-semibold last:border-0 active:bg-cream"
-              >
-                {label as string}
-              </button>
-            ))}
-          </div>
-        )}
-      </form>
+          <button onClick={() => setCamMenu((v) => !v)} aria-label="Snap a meal" aria-expanded={camMenu} className="flex flex-col items-center gap-1 active:scale-95">
+            <span className="flex h-[72px] w-[72px] items-center justify-center rounded-full bg-teal text-white shadow-[0_0_0_6px_rgb(16_104_106/0.12),0_14px_28px_rgb(16_104_106/0.35)]"><IconCamera size={30} /></span>
+            <span className="font-display text-[13px] font-bold">Snap a meal</span>
+          </button>
+          <button onClick={() => setChatOpen(true)} aria-label="Ask Hoppy" className="flex flex-col items-center gap-1 active:scale-95">
+            <span className="flex h-14 w-14 items-center justify-center rounded-full border border-line bg-card shadow-card"><IconChat size={24} /></span>
+            <span className="font-display text-[13px] font-semibold">Ask Hoppy</span>
+          </button>
+          {camMenu && (
+            <div className="absolute bottom-[calc(100%+10px)] left-1/2 w-[240px] -translate-x-1/2 overflow-hidden rounded-[18px] bg-card shadow-lift animate-fade-up" role="menu">
+              {[
+                ["Take a photo", () => camera.current?.click()],
+                ["Choose from gallery", () => gallery.current?.click()],
+                ["Search for a dish", () => setDraft({ key: Date.now(), items: [], type: mealTypeFor(), source: "manual" })],
+                ["Try a sample meal", sampleMeal],
+              ].map(([label, fn]) => (
+                <button key={label as string} type="button" role="menuitem" onClick={() => { setCamMenu(false); (fn as () => void)(); }}
+                  className="block w-full border-b border-[#f3ecdf] px-4 py-3.5 text-center font-display text-[17px] font-semibold last:border-0 active:bg-cream">
+                  {label as string}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </nav>
 
       {toast && <Toast>{toast}</Toast>}
 
@@ -594,6 +619,7 @@ export function Home() {
           demo={draft.demo}
           transcript={draft.photo_path ? undefined : draft.transcript}
           editing={!!draft.editing}
+          onDelete={draft.editing ? async () => { await deleteMeal(draft.editing!.id); setDraft(null); await refresh(profile); } : undefined}
           onConfirm={confirm}
           onClose={() => setDraft(null)}
         />
@@ -614,23 +640,20 @@ export function Home() {
           onClose={() => setVoice(false)}
         />
       )}
+      {chatOpen && (
+        <ChatOverlay
+          name={firstName}
+          twin={twin}
+          stage={stage}
+          chat={chat.filter((c) => c.kind !== "nudge")}
+          pending={pending}
+          onSend={onText}
+          onClose={() => setChatOpen(false)}
+        />
+      )}
       {question && asking && (
         <QuestionScreen key={question.id} q={question.id} twin={twin} stage={stage} weightKg={profile.weight_kg} onAnswer={answerQuestion} onLater={skipQuestion} />
       )}
     </main>
   );
-}
-
-type Entry =
-  | { kind: "meal"; at: string; m: SavedMeal }
-  | { kind: "activity"; at: string; a: SavedActivity }
-  | { kind: "chat"; at: string; c: ChatMsg };
-
-/** Meals, workouts and chat interleaved by time. */
-function timeline(meals: SavedMeal[], activities: SavedActivity[], chat: ChatMsg[]): Entry[] {
-  return [
-    ...meals.map((m) => ({ kind: "meal" as const, at: m.eaten_at, m })),
-    ...activities.map((a) => ({ kind: "activity" as const, at: a.done_at, a })),
-    ...chat.map((c) => ({ kind: "chat" as const, at: c.created_at, c })),
-  ].sort((x, y) => new Date(x.at).getTime() - new Date(y.at).getTime());
 }
