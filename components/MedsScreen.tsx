@@ -31,7 +31,7 @@ async function remindLater(minutes: number, body: string) {
 /** "Time for Meds, Suresh!" (images/…ac9n…png, right): the twin reminds, one tap to say it's done. */
 export function MedsScreen() {
   const [me] = useMe();
-  const twin = useTwin();
+  const twin = useTwin({ poses: ["wave"] });
   const [date, setDate] = useState<string | null>(null);
   const [nowHm, setNowHm] = useState("00:00");
   const [doses, setDoses] = useState<Dose[]>([]);

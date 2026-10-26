@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Confetti, Medallion, loadTwin, type Twin } from "@/components/art";
+import { Confetti, Medallion, ensureTwinArt, loadTwin, type Twin } from "@/components/art";
 import { IconArrowUpRight, IconShare } from "@/components/icons";
 import { ShareCard, type ShareCardData } from "@/components/ShareCard";
 import { Button, ButtonLink, Card, Loading, Screen, TopBar } from "@/components/ui";
@@ -61,6 +61,14 @@ export function ShareScreen({ kind }: { kind: "today" | "milestone" }) {
       const [t, tw, prog, days, wk] = await Promise.all([loadToday(me), loadTwin(), progressFor(me), loadStreak(), loadWeek()]);
       setTwin(tw);
       setWeek(wk);
+      // The card shows Day 1 and today's stage; the badge shows the cheering pose.
+      ensureTwinArt(tw, { stages: [1, me.current_stage], poses: ["cheer"] })
+        .then((fresh) => {
+          if (!fresh) return;
+          setTwin(fresh);
+          setData(valid ? milestoneCard(me, fresh.stages, mType as "stage", mValue, days) : todayCard(me, t, fresh.stages, prog, days));
+        })
+        .catch(console.error);
       setData(valid ? milestoneCard(me, tw.stages, mType as "stage", mValue, days) : todayCard(me, t, tw.stages, prog, days));
     })().catch(console.error);
   }, [me, valid, mType, mValue]);

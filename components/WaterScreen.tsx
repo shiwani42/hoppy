@@ -88,7 +88,7 @@ function Drop({ className, size = 22 }: { className: string; size?: number }) {
 /** "Paani Ka Tumbler": the day's water as a glass that fills, and the twin sipping along. */
 export function WaterScreen() {
   const [me, setMe] = useMe();
-  const twin = useTwin();
+  const twin = useTwin({ poses: ["drink"] });
   const [ml, setMl] = useState<number | null>(null);
   const [target, setTarget] = useState(2500);
   const [splash, setSplash] = useState(0);

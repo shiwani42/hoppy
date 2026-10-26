@@ -26,7 +26,7 @@ export function MoveScreen() {
   const router = useRouter();
   const search = useSearchParams();
   const [me] = useMe();
-  const twin = useTwin();
+  const twin = useTwin({ poses: ["stretch", "walk"] });
   const initial = activityByKey(search.get("a") ?? "") ?? activityByKey("surya-namaskar")!;
   const [act, setAct] = useState<Activity>(initial);
   const [q, setQ] = useState(search.get("a") ? label(initial) : "");

@@ -25,7 +25,7 @@ const daysSince = (d: string | null) => (d ? Math.max(0, Math.round((Date.now() 
 export function JourneyScreen() {
   const [me, setMe] = useMe();
   const [asked, setAsked] = useState(false);
-  const twin = useTwin();
+  const twin = useTwin({ stages: [1, 2, 3, 4, 5], poses: ["cheer"] });
   const [progress, setProgress] = useState<StageProgress | null>(null);
   const [streak, setStreak] = useState(0);
   const [badges, setBadges] = useState(false);

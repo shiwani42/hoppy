@@ -42,7 +42,7 @@ export type ImageRef = { bytes: Buffer; mimeType: string };
  * One twin image from reference images (selfie, style reference, own twin) and a
  * prompt (lib/ai/prompts.ts > twinPrompt). Transparent PNG. Null without a key.
  */
-export async function generateTwinOpenAI(refs: ImageRef[], prompt: string, tall: boolean): Promise<Buffer | null> {
+export async function generateTwinOpenAI(refs: ImageRef[], prompt: string, opts: { tall: boolean; portrait: boolean }): Promise<Buffer | null> {
   if (!hasKey.openai()) return null;
   const model = models.twinImage;
   const image = await Promise.all(
@@ -52,11 +52,11 @@ export async function generateTwinOpenAI(refs: ImageRef[], prompt: string, tall:
     model,
     image,
     prompt,
-    size: tall ? "1024x1536" : "1024x1024",
-    quality: models.twinQuality,
+    size: opts.tall ? "1024x1536" : "1024x1024",
+    quality: opts.portrait ? models.twinPortraitQuality : models.twinQuality,
     background: "transparent",
     output_format: "png",
-    // Face likeness: supported by the gpt-image-1 family; newer models do it by default.
+    // Face likeness: an explicit setting only on the gpt-image-1 family; newer models do it by default.
     ...(model.startsWith("gpt-image-1") ? { input_fidelity: "high" as const } : {}),
   });
   const b64 = res.data?.[0]?.b64_json;

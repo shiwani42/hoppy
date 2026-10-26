@@ -1,25 +1,26 @@
 /**
  * The twin's look, shared by every image (OpenAI images first, Gemini as backup).
- * Each request sends: 1) the selfie — the only source of identity; 2) the style
- * reference (lib/avatar/style-ref.ts, cropped from the learner's mockups) — style
- * only; 3) once it exists, the user's own twin portrait, so every later pose and
- * stage stays the same character. Different faces, one consistent style.
+ * Each request sends two images: 1) the selfie — the only source of identity;
+ * 2) for the first portrait, the style reference (lib/avatar/style-ref.ts, cropped
+ * from the learner's mockups — style only); for every later pose and stage, the
+ * user's own portrait instead, so they stay the same character. Different faces,
+ * one consistent style.
  */
 export function twinPrompt(composition: string, opts: { ownTwin: boolean }) {
   return `Create one image of this person's personal 3D "twin" for a friendly Indian health app.
 
 INPUT IMAGES
 - Image 1 is a selfie of the user. It is the ONLY source of who this person is.
-- Image 2 is a style reference. Copy its rendering style exactly, but NOTHING about the person in it: not their face, age, gender, skin tone, hair, beard or clothes.${
+${
     opts.ownTwin
-      ? "\n- Image 3 is this user's existing twin. Keep the character identical to it: same face, hair, skin tone, proportions and rendering."
-      : ""
+      ? "- Image 2 is this user's existing 3D twin, already in the right style. Draw the SAME character: identical face, hair, skin tone, proportions and rendering — only the pose, framing and clothes change."
+      : "- Image 2 is a style reference. Copy its rendering style exactly, but NOTHING about the person in it: not their face, age, gender, skin tone, hair, beard or clothes."
   }
 
 IDENTITY — keep from image 1, so anyone who knows them recognises them instantly:
 face shape and jawline, nose, eye shape and spacing, eyebrows, lips, skin tone (never lighten or darken it), hairline, hairstyle and hair colour (including grey or balding), facial hair or clean-shaven, glasses if worn, and anything they wear on the head or face (bindi, tilak, turban, hijab, earrings, nose pin). Keep their real apparent age and gender.
 
-STYLE — match image 2:
+STYLE — match image 2 exactly:
 a high-end 3D animated feature-film character (Pixar-like), not a flat cartoon, not a sticker, not a photo. Soft subsurface-scattered skin with a matte, clay-like finish and a subtle warm blush; slightly enlarged warm, expressive eyes with catchlights; hair sculpted in smooth soft clumps with gentle highlights; rounded but true-to-life adult proportions — keep wrinkles, laugh lines and grey hair, rendered gently. Soft warm studio key light from the front-left, gentle fill, faint rim light; warm, slightly muted palette; clothes in soft matte cotton. Expression calm and kind with a small smile unless the pose says otherwise.
 
 TONE: dignified and flattering for adults over 40. Never childish or chibi, never exaggerated or caricatured, never mocking their body size, never sexualised.

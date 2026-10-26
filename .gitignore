@@ -39,3 +39,6 @@ next-env.d.ts
 
 # prototype dependencies
 /prototypes/*/node_modules
+
+# Generated test selfies (scripts/make-art.mjs demo)
+scripts/demo/

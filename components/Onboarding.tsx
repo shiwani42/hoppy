@@ -95,9 +95,9 @@ export function Onboarding() {
     e.preventDefault();
     if (!name.trim()) return;
     await saveProfile({ name: name.trim() });
-    // Body stages and the other poses render in the background, matched to the portrait.
-    apiJson("/api/avatar", { stages: twin?.stages[1] ? [2, 3, 4, 5] : [1, 2, 3, 4, 5] }).catch(() => {});
-    apiJson("/api/avatar", { poses: ["drink", "stretch", "walk", "wave", "cheer"] }).catch(() => {});
+    // Body stage 1 renders in the background, matched to the portrait. Every other pose and
+    // stage is made the first time a screen shows it (components/art.tsx > ensureTwinArt).
+    if (!twin?.stages[1]) apiJson("/api/avatar", { stages: [1] }).catch(() => {});
     router.replace("/");
   }
 

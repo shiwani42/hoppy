@@ -111,8 +111,10 @@ export function SettingsScreen() {
       const up = await supabase().storage.from("selfies").upload(selfie_path, small, { contentType: "image/jpeg" });
       if (up.error) throw up.error;
       setProfile(await saveProfile({ selfie_path, skin_tone }));
-      await apiJson("/api/avatar", { stages: [1, 2, 3, 4, 5], poses: ["bust"] });
-      apiJson("/api/avatar", { poses: ["drink", "stretch", "walk", "wave", "cheer"] }).catch(() => {});
+      // A new portrait first; the old poses and stages are cleared and remade, matched to it, as screens need them.
+      await apiJson("/api/avatar", { poses: ["bust"], force: true });
+      await Promise.all([supabase().from("avatar_poses").delete().neq("pose", "bust"), supabase().from("avatar_stages").delete().gte("stage", 1)]);
+      await apiJson("/api/avatar", { stages: [1, profile.current_stage] });
       await loadTwin(true);
       flash("New twin ready ✨");
     } catch (err) {

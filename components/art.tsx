@@ -5,6 +5,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { foodArt } from "@/lib/art";
 import { loadAvatarPoses, loadAvatarStages, type AvatarPose, type AvatarStage, type PoseKey } from "@/lib/avatar/client";
+import { apiJson } from "@/lib/supabase/client";
 
 export type Twin = { stages: Record<number, AvatarStage>; poses: Partial<Record<PoseKey, AvatarPose>> };
 
@@ -18,13 +19,40 @@ export function loadTwin(fresh = false): Promise<Twin> {
   return twinCache;
 }
 
-export function useTwin() {
+export type TwinNeed = { poses?: PoseKey[]; stages?: number[] };
+const asked = new Set<string>();
+
+/**
+ * Makes the poses and stages a screen shows the first time it needs them (cost:
+ * each image is made once, only if used). Only once the real twin portrait exists —
+ * without an image model there's nothing to make. Resolves with the refreshed twin.
+ */
+export async function ensureTwinArt(twin: Twin, need: TwinNeed): Promise<Twin | null> {
+  if (!twin.poses.bust) return null;
+  const poses = (need.poses ?? []).filter((p) => !twin.poses[p] && !asked.has(`p:${p}`));
+  const stages = (need.stages ?? []).filter((n) => (!twin.stages[n] || twin.stages[n].is_placeholder) && !asked.has(`s:${n}`));
+  if (!poses.length && !stages.length) return null;
+  poses.forEach((p) => asked.add(`p:${p}`));
+  stages.forEach((n) => asked.add(`s:${n}`));
+  await apiJson("/api/avatar", { poses, stages });
+  return loadTwin(true);
+}
+
+export function useTwin(need?: TwinNeed) {
   const [twin, setTwin] = useState<Twin | null>(null);
+  const key = JSON.stringify(need ?? {});
   useEffect(() => {
     let live = true;
-    loadTwin().then((t) => live && setTwin(t)).catch(console.error);
+    loadTwin()
+      .then(async (t) => {
+        if (!live) return;
+        setTwin(t);
+        const fresh = await ensureTwinArt(t, JSON.parse(key));
+        if (live && fresh) setTwin(fresh);
+      })
+      .catch(console.error);
     return () => void (live = false);
-  }, []);
+  }, [key]);
   return twin;
 }
 

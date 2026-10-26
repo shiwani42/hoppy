@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AppMenu } from "@/components/AppMenu";
-import { Confetti, Medallion, TwinArt, loadTwin, type Twin } from "@/components/art";
+import { Confetti, Medallion, TwinArt, ensureTwinArt, loadTwin, type Twin } from "@/components/art";
 import { IconCamera, IconMic, IconSend } from "@/components/icons";
 import { MealConfirm } from "@/components/MealConfirm";
 import { ASK, QuestionScreen, type DripAnswer } from "@/components/QuestionScreen";
@@ -196,10 +196,8 @@ export function Home() {
       setTwin(tw);
       const t = await refresh(p);
       await checkStage(p);
-      // Stages and poses may still be generating in the background after onboarding.
-      if (Object.keys(tw.stages).length < 5 || Object.keys(tw.poses).length < 6) {
-        for (const ms of [15000, 45000, 90000]) setTimeout(async () => setTwin(await loadTwin(true)), ms);
-      }
+      // Body stage 1 may still be rendering in the background right after onboarding.
+      if (!tw.stages[1]) setTimeout(async () => setTwin(await loadTwin(true)), 30000);
       if (!maybeAsk(p, "app_open")) maybeAsk(p, "morning", t);
       const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
       if (tz && p.timezone !== tz) setProfile(await saveProfile({ timezone: tz }));
@@ -542,7 +540,7 @@ export function Home() {
         <button type="button" onClick={() => setCamMenu((v) => !v)} aria-label="Snap a meal" aria-expanded={camMenu} className="flex h-11 w-10 shrink-0 items-center justify-center text-ink active:scale-95">
           <IconCamera size={26} />
         </button>
-        <button type="button" onClick={() => setVoice(true)} aria-label="Speak a log" className="flex h-11 w-9 shrink-0 items-center justify-center text-ink active:scale-95">
+        <button type="button" onClick={() => { setVoice(true); if (twin) ensureTwinArt(twin, { poses: ["wave"] }).then((t) => t && setTwin(t)).catch(() => {}); }} aria-label="Speak a log" className="flex h-11 w-9 shrink-0 items-center justify-center text-ink active:scale-95">
           <IconMic size={25} />
         </button>
         <input

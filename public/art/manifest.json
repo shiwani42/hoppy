@@ -1,5 +1,13 @@
 {
   "food": [],
-  "stickers": ["chai", "dal-chawal-roti", "idli-sambar", "khichdi"],
-  "experts": ["dr-ananya-rao", "vikram-singh"]
+  "stickers": [
+    "chai",
+    "dal-chawal-roti",
+    "idli-sambar",
+    "khichdi"
+  ],
+  "experts": [
+    "dr-ananya-rao",
+    "vikram-singh"
+  ]
 }

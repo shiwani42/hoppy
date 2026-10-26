@@ -16,7 +16,8 @@ const FOODS = JSON.parse(await readFile("data/indian-foods.json", "utf8")).foods
 const env = { ...process.env };
 for (const line of (await readFile(".env.local", "utf8")).split("\n")) {
   const i = line.indexOf("=");
-  if (i > 0 && !line.startsWith("#")) env[line.slice(0, i).trim()] = line.slice(i + 1).trim();
+  const v = line.slice(i + 1).trim();
+  if (i > 0 && !line.startsWith("#") && v) env[line.slice(0, i).trim()] = v;
 }
 const openai = env.OPENAI_API_KEY ? new OpenAI({ apiKey: env.OPENAI_API_KEY }) : null;
 const gemini = env.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: env.GEMINI_API_KEY }) : null;
@@ -24,7 +25,8 @@ if (!openai && !gemini) {
   console.error("Add OPENAI_API_KEY (or GEMINI_API_KEY) to .env.local first.");
   process.exit(1);
 }
-const OPENAI_MODEL = env.OPENAI_IMAGE_MODEL ?? "gpt-image-1.5";
+// Flare: OpenAI's fast, high-volume image model — right for one-off stickers and photos (≈ $0.013 each at medium).
+const OPENAI_MODEL = env.OPENAI_ART_MODEL ?? "gpt-image-2.5-flare";
 const GEMINI_MODEL = env.GEMINI_IMAGE_MODEL ?? "gemini-3.1-flash-image-preview";
 const force = process.argv.includes("--force");
 const groups = process.argv.slice(2).filter((a) => !a.startsWith("--"));
