@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ActivityCard } from "@/components/ActivityCard";
+import { AppMenu } from "@/components/AppMenu";
 import { ActivityConfirmSheet } from "@/components/ActivityConfirmSheet";
 import { Avatar } from "@/components/Avatar";
 import { Celebration } from "@/components/Celebration";
@@ -317,11 +318,15 @@ export function Home() {
   return (
     <main className="flex flex-1 flex-col px-5 pt-8">
       <header className="relative flex flex-col items-center text-center">
+        <div className="mb-2 flex w-full items-center justify-between">
+          <Link href="/calendar" aria-label="Calendar" className="flex h-11 w-11 items-center justify-center rounded-full bg-card text-xl shadow-sm">📅</Link>
+          <AppMenu />
+        </div>
         <h1 className="font-display text-3xl font-bold">
           {greeting()}, {profile.name}.
         </h1>
         {today && (
-          <div className="absolute right-5 top-24 z-10">
+          <div className="absolute right-0 top-32 z-10">
             <Tumbler ml={today.totals.waterMl} target={today.targets.waterMl} glassMl={GLASS_ML} onAdd={() => water(1)} onUndo={() => water(-1)} />
           </div>
         )}

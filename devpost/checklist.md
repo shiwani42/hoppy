@@ -79,7 +79,7 @@ Build mode: fast (learner asked to finish everything end to end locally before t
   Learner check: Look at your five stages side by side. Is each one flattering and recognizably you? Then trigger the seeded stage-up and watch the celebration.
   Commit: `Five body stages and stage-up progression`
 
-- [ ] **8. Share your day like Strava**
+- [x] **8. Share your day like Strava**
   Becomes usable: Open today's share card (9:16): your avatar then vs. now, today's highlights, streak, and goal progress, with the kolam border. Tap Share to open Android's share sheet (Instagram, WhatsApp, X), or save the image.
   Why now: Completes the core journey end to end (log → react → share) and is the growth hook you care about.
   PRD ref: `prd.md > Daily Share Card`, `prd.md > The Core Journey` (step 7)
