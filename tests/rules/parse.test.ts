@@ -71,3 +71,32 @@ describe("isQuestion", () => {
     ["30 min walk", false],
   ])("%s → %s", (q, v) => expect(isQuestion(q)).toBe(v));
 });
+
+describe("parseLog — water and mixed logs (Voice Logging screen)", () => {
+  it("reads spoken Hinglish: walk plus two glasses of water", () => {
+    expect(parseLog("pachis minute brisk walk kiya aur do glass paani piya")).toMatchObject({
+      kind: "activity",
+      activity: { key: "walk-brisk", minutes: 25 },
+      waterMl: 500,
+    });
+  });
+
+  it("logs water on its own", () => {
+    expect(parseLog("2 glass water")).toEqual({ kind: "water", waterMl: 500 });
+    expect(parseLog("500 ml paani")).toEqual({ kind: "water", waterMl: 500 });
+    expect(parseLog("ek bottle paani")).toEqual({ kind: "water", waterMl: 1000 });
+  });
+
+  it("keeps food beside water", () => {
+    const r = parseLog("2 roti, dal and a glass of water");
+    expect(r.kind).toBe("meal");
+    if (r.kind === "meal") {
+      expect(r.items.map((i) => i.name)).toEqual(["Roti / chapati", "Dal tadka"]);
+      expect(r.waterMl).toBe(250);
+    }
+  });
+
+  it("does not treat coconut water as plain water", () => {
+    expect(parseLog("nariyal paani").kind).not.toBe("water");
+  });
+});

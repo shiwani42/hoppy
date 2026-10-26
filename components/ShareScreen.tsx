@@ -1,42 +1,71 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { Confetti, Medallion, loadTwin, type Twin } from "@/components/art";
+import { IconArrowUpRight, IconShare } from "@/components/icons";
 import { ShareCard, type ShareCardData } from "@/components/ShareCard";
-import { loadAvatarStages } from "@/lib/avatar/client";
-import { loadProfile } from "@/lib/profile";
+import { Button, ButtonLink, Card, Loading, Screen, TopBar } from "@/components/ui";
+import { useMe } from "@/components/useMe";
+import { STAGE_BODIES } from "@/lib/ai/prompts";
 import { recordCard, renderCard, shareOrDownload } from "@/lib/share/client";
 import { milestoneCard, todayCard } from "@/lib/share/data";
 import { progressFor } from "@/lib/stages/client";
 import { loadStreak } from "@/lib/stats/streak";
-import { loadToday } from "@/lib/stats/today";
-import { ensureSession } from "@/lib/supabase/client";
+import { dateKey, loadToday } from "@/lib/stats/today";
+import { supabase } from "@/lib/supabase/client";
 
-/** Preview + share for a card (spec.md > Share Cards). */
+type Week = { active: number; workouts: number; waterL: number };
+
+/** The last 7 days for the badge's "sharing-ready preview". */
+async function loadWeek(): Promise<Week> {
+  const sb = supabase();
+  const since = new Date(Date.now() - 6 * 864e5);
+  since.setHours(0, 0, 0, 0);
+  const [meals, acts, water] = await Promise.all([
+    sb.from("meals").select("eaten_at").gte("eaten_at", since.toISOString()),
+    sb.from("activities").select("id", { count: "exact", head: true }).gte("done_at", since.toISOString()),
+    sb.from("water_logs").select("ml").gte("at", since.toISOString()),
+  ]);
+  return {
+    active: new Set((meals.data ?? []).map((m) => dateKey(new Date(m.eaten_at)))).size,
+    workouts: acts.count ?? 0,
+    waterL: Math.round((water.data ?? []).reduce((s, w) => s + w.ml, 0) / 1000),
+  };
+}
+
+const COPY = {
+  streak: (v: number) => ({ title: `${v}-Day Streak!`, badge: `${v} DAYS ACTIVE`, heading: `Aapka ${v}-Day Consistency Badge! 🎉`, body: `Shabaash! You've logged every single day for ${v} days. Your twin is looking strong — and so are your habits!` }),
+  stage: (v: number) => ({ title: `Stage ${v} Unlocked!`, badge: `STAGE ${v}`, heading: `Welcome to “${STAGE_BODIES[v].name}”! 🎉`, body: "Weeks of strong days, made visible. Your twin just levelled up with you — never back, only forward." }),
+  weight: (v: number) => ({ title: `${v} kg Lighter!`, badge: `−${v} KG`, heading: "Steady, safe progress! 🎉", body: `That's ${v} kg down at a healthy pace. One plate, one walk, one glass at a time.` }),
+} as const;
+
+/** Milestone celebration (images/…5ben…png, right) and the share card (images/…3rrn…png, right). */
 export function ShareScreen({ kind }: { kind: "today" | "milestone" }) {
-  const router = useRouter();
   const search = useSearchParams();
   const mType = search.get("type");
   const mValue = Number(search.get("value"));
+  const valid = kind === "milestone" && (mType === "stage" || mType === "weight" || mType === "streak") && mValue > 0;
+  const [me] = useMe();
   const card = useRef<HTMLDivElement>(null);
+  const [twin, setTwin] = useState<Twin | null>(null);
   const [data, setData] = useState<ShareCardData | null>(null);
+  const [week, setWeek] = useState<Week | null>(null);
+  const [view, setView] = useState<"celebrate" | "card">(valid && search.get("celebrate") ? "celebrate" : "card");
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
+    if (!me) return;
     (async () => {
-      await ensureSession();
-      const p = await loadProfile();
-      if (!p?.name) return router.replace("/onboarding");
-      const [t, stages, prog, days] = await Promise.all([loadToday(p), loadAvatarStages(), progressFor(p), loadStreak()]);
-      if (kind === "milestone" && (mType === "stage" || mType === "weight" || mType === "streak") && mValue > 0) {
-        setData(milestoneCard(p, stages, mType, mValue, days));
-      } else {
-        setData(todayCard(p, t, stages, prog, days));
-      }
+      const [t, tw, prog, days, wk] = await Promise.all([loadToday(me), loadTwin(), progressFor(me), loadStreak(), loadWeek()]);
+      setTwin(tw);
+      setWeek(wk);
+      setData(valid ? milestoneCard(me, tw.stages, mType as "stage", mValue, days) : todayCard(me, t, tw.stages, prog, days));
     })().catch(console.error);
-  }, [router, kind, mType, mValue]);
+  }, [me, valid, mType, mValue]);
+
+  if (!me || !data || !week) return <Loading label="Drawing your card…" />;
 
   async function go() {
     if (!card.current || !data) return;
@@ -44,8 +73,8 @@ export function ShareScreen({ kind }: { kind: "today" | "milestone" }) {
     setStatus(null);
     try {
       const blob = await renderCard(card.current);
-      await recordCard(blob, kind, data.title);
-      const how = await shareOrDownload(blob, `hoppy-${kind}.png`, `${data.title} on Hoppy 💪`);
+      await recordCard(blob, kind, data.subtitle);
+      const how = await shareOrDownload(blob, `hoppy-${kind}.png`, `${data.subtitle} on Hoppy 💪`);
       setStatus(how === "shared" ? "Shared! 🎉" : how === "downloaded" ? "Saved to your downloads" : null);
     } catch (err) {
       console.error(err);
@@ -55,27 +84,57 @@ export function ShareScreen({ kind }: { kind: "today" | "milestone" }) {
     }
   }
 
+  if (view === "celebrate" && valid) {
+    const c = COPY[mType as keyof typeof COPY](mValue);
+    const img = twin?.poses.cheer?.url ?? twin?.poses.bust?.url ?? twin?.stages[me.current_stage]?.url;
+    return (
+      <Screen className="relative overflow-hidden">
+        <Confetti burst={1} count={40} spread={220} />
+        <Confetti still count={22} spread={190} />
+        <TopBar backHref="/" />
+        <h1 className="relative -mt-3 text-center font-display text-[36px] leading-tight font-extrabold">{c.title}</h1>
+        <Card className="relative mt-5 flex flex-1 flex-col items-center px-5 pt-5 pb-5 text-center">
+          <h2 className="font-display text-[24px] leading-tight font-bold">{c.heading}</h2>
+          <div className="relative mt-3 animate-pop">
+            <span aria-hidden className="absolute top-1/2 -left-9 text-[28px] text-[#e7b84f]">✣</span>
+            <span aria-hidden className="absolute top-1/2 -right-9 text-[28px] text-[#e7b84f]">✣</span>
+            <Medallion label={c.badge} imageUrl={img} crop={!twin?.poses.cheer && !twin?.poses.bust} size={230} />
+          </div>
+          <p className="mt-3 text-[16px] leading-snug">{c.body}</p>
+          <div className="mt-4 w-full rounded-[16px] border border-[#efe6d6] bg-card px-3 py-3 shadow-card">
+            <p className="text-left font-display text-[17px] font-bold">Sharing-ready preview</p>
+            <dl className="mt-2 grid grid-cols-3 divide-x divide-[#efe6d6] text-center">
+              <div><dt className="text-[13px] text-ink-soft">Days Active</dt><dd className="font-display text-[17px] font-bold">{week.active} / 7</dd></div>
+              <div><dt className="text-[13px] text-ink-soft">Workouts</dt><dd className="font-display text-[17px] font-bold">{week.workouts} Completed</dd></div>
+              <div><dt className="text-[13px] text-ink-soft">Total Water</dt><dd className="font-display text-[17px] font-bold">{week.waterL} Liters</dd></div>
+            </dl>
+          </div>
+        </Card>
+        <div className="relative mt-4">
+          <Button onClick={() => setView("card")}>
+            Show off on Share Screen <IconArrowUpRight size={22} />
+          </Button>
+          <ButtonLink href="/" variant="ghost" className="mt-1">Back to Home</ButtonLink>
+        </div>
+      </Screen>
+    );
+  }
+
   return (
-    <main className="flex flex-1 flex-col items-center px-5 pt-6 pb-8">
-      <div className="flex w-full items-center justify-between">
-        <Link href="/" className="rounded-full px-3 py-2 font-display font-semibold text-teal">← Back</Link>
-        <p className="font-display text-lg font-semibold">{kind === "milestone" ? "Share your milestone" : "Share your day"}</p>
-        <span className="w-16" />
-      </div>
-      <div className="mt-4 overflow-hidden rounded-[1.5rem] shadow-xl" style={{ width: 324, height: 576 }}>
+    <Screen className="items-center">
+      <div className="w-full"><TopBar /></div>
+      <div className="mt-2 overflow-hidden rounded-[26px] shadow-lift" style={{ width: 324, height: 576 }}>
         <div style={{ transform: "scale(0.9)", transformOrigin: "top left" }}>
-          {data ? <ShareCard ref={card} d={data} /> : <div className="h-[640px] w-[360px] animate-pulse bg-line" />}
+          <ShareCard ref={card} d={data} />
         </div>
       </div>
       {status && <p role="status" className="mt-3 text-ink-soft">{status}</p>}
-      <button
-        onClick={go}
-        disabled={!data || busy}
-        className="mt-5 h-14 w-full max-w-sm rounded-full bg-teal font-display text-lg font-semibold text-white shadow-md disabled:opacity-40"
-      >
-        {busy ? "Drawing…" : "Share ↗"}
-      </button>
-      <p className="mt-2 text-center text-xs text-ink-soft">Instagram Stories, WhatsApp, X — or save the image.</p>
-    </main>
+      <div className="w-full pt-6">
+        <Button variant="aqua" className="rounded-[18px]" onClick={go} disabled={busy}>
+          {busy ? "Drawing…" : "Share to Friends"} <IconShare size={22} />
+        </Button>
+        <p className="mt-2 text-center text-[13px] text-ink-soft">Instagram Stories, WhatsApp, X — or save the image.</p>
+      </div>
+    </Screen>
   );
 }

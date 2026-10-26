@@ -11,7 +11,7 @@ import type { MealAnalysis } from "./types";
  * Photo → anchored meal items. OpenAI first (strongest on food photos), Gemini
  * as backup, labeled demo data when neither key is set.
  */
-export async function analyzePhoto(image: Buffer, mimeType: string): Promise<MealAnalysis> {
+export async function analyzePhoto(image: Buffer, mimeType: string, sample = false): Promise<MealAnalysis> {
   let raw: AiMealT | null = null;
   try {
     raw = await analyzeMealPhoto(image, mimeType);
@@ -27,6 +27,6 @@ export async function analyzePhoto(image: Buffer, mimeType: string): Promise<Mea
   }
   const demo = !raw && !hasKey.openai() && !hasKey.gemini();
   if (!raw && !demo) throw new Error("AI unavailable");
-  raw ??= mockMeal(image);
+  raw ??= mockMeal(image, sample);
   return { is_food: raw.is_food, items: raw.is_food ? raw.items.map(anchorItem) : [], demo };
 }

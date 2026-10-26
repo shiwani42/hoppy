@@ -29,42 +29,33 @@ export function todayCard(
   p: Profile,
   t: Today,
   stages: Record<number, AvatarStage>,
-  progress: StageProgress | null,
+  _progress: StageProgress | null,
   streak?: number,
 ): ShareCardData {
+  const day = journeyDay(p.created_at);
   const strongBars = STAT_KEYS.filter((k) => (t.stats[k].value ?? 0) >= STRONG_STAT).length;
-  const net = r(t.totals.kcalIn - t.totals.kcalOut);
-  const goal = goalProgress(p);
   return {
-    title: `${p.name}'s Day ${journeyDay(p.created_at)}`,
-    subtitle: strongBars ? `${strongBars} of 6 bars strong today` : "Showing up is the first win",
+    title: `Hoppy — ${p.name}'s Journey`,
+    subtitle: `Day ${day} · ${strongBars} of 6 stats strong today`,
     date: new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
-    startUrl: stages[1]?.url,
-    nowUrl: stages[p.current_stage]?.url ?? stages[1]?.url,
-    stageName: STAGE_BODIES[p.current_stage].name,
-    stageNumber: p.current_stage,
-    numbers: [
-      { label: t.targets.calories ? `Net kcal · of ${t.targets.calories}` : "Calories in", value: String(t.targets.calories ? net : r(t.totals.kcalIn)), color: "var(--color-energy)" },
-      { label: "Protein", value: String(r(t.totals.proteinG)), unit: "g", color: "var(--color-muscle)" },
-      { label: "Active", value: String(r(t.totals.activeMinutes)), unit: "min", color: "var(--color-strength)" },
-      { label: "Water", value: (t.totals.waterMl / 1000).toFixed(1), unit: "L", color: "var(--color-hydration)" },
+    start: { url: stages[1]?.url, label: "Day 1", sub: `(${STAGE_BODIES[1].name})` },
+    now: { url: stages[p.current_stage]?.url ?? stages[1]?.url, label: `Day ${day}`, sub: `(${STAGE_BODIES[p.current_stage].name})` },
+    heading: "Today's Highlights:",
+    lines: [
+      `${r(t.totals.kcalIn).toLocaleString("en-IN")} kcal in | ${r(t.totals.kcalOut).toLocaleString("en-IN")} kcal out`,
+      `${r(t.totals.activeMinutes)} min active · ${(t.totals.waterMl / 1000).toFixed(1)} L water`,
     ],
-    progress: goal
-      ? { label: `−${goal.lost} kg · ${goal.pct}% of the way to goal`, pct: goal.pct }
-      : progress && p.current_stage < 5
-        ? { label: `${progress.done}/${progress.needed} strong days to ${STAGE_BODIES[p.current_stage + 1].name}`, pct: (progress.done / progress.needed) * 100 }
-        : null,
-    badge: streak && streak > 1 ? `🔥 ${streak}-day streak` : t.strong ? "Strong day ✨" : null,
+    badge: streak && streak > 1 ? `${streak}-Day Consistent Logging Streak! 🔥` : t.strong ? "Strong day ✨" : "Showing up is the first win 🌱",
   };
 }
 
 const MILESTONE_COPY = {
-  stage: (v: number) => ({ title: `Stage ${v}: ${STAGE_BODIES[v].name}`, subtitle: "Weeks of strong days, made visible", hero: { label: "Stage", value: `${v}`, unit: "of 5" } }),
-  weight: (v: number) => ({ title: `${v} kg lighter`, subtitle: "Steady, safe progress — one plate at a time", hero: { label: "Down", value: `−${v}`, unit: "kg" } }),
-  streak: (v: number) => ({ title: `${v}-day streak 🔥`, subtitle: "Showing up, every single day", hero: { label: "Streak", value: `${v}`, unit: "days" } }),
+  stage: (v: number) => ({ title: `Stage ${v}: ${STAGE_BODIES[v].name}`, line: "Weeks of strong days, made visible" }),
+  weight: (v: number) => ({ title: `${v} kg lighter`, line: "Steady, safe progress — one plate at a time" }),
+  streak: (v: number) => ({ title: `${v}-day streak`, line: "Showing up, every single day" }),
 } as const;
 
-/** A milestone card: the achievement as the hero number plus the journey so far. */
+/** A milestone card: the achievement, Day 1 vs now, and the journey so far. */
 export function milestoneCard(
   p: Profile,
   stages: Record<number, AvatarStage>,
@@ -74,21 +65,15 @@ export function milestoneCard(
 ): ShareCardData {
   const copy = MILESTONE_COPY[type](value);
   const goal = goalProgress(p);
+  const day = journeyDay(p.created_at);
   return {
-    title: copy.title,
-    subtitle: `${p.name} · ${copy.subtitle}`,
+    title: `Hoppy — ${p.name}'s Journey`,
+    subtitle: `Milestone: ${copy.title}`,
     date: new Date().toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
-    startUrl: stages[1]?.url,
-    nowUrl: stages[p.current_stage]?.url ?? stages[1]?.url,
-    stageName: STAGE_BODIES[p.current_stage].name,
-    stageNumber: p.current_stage,
-    numbers: [
-      { ...copy.hero, color: "var(--color-turmeric)" },
-      { label: "Journey", value: String(journeyDay(p.created_at)), unit: "days", color: "var(--color-teal)" },
-      ...(goal ? [{ label: "Lost so far", value: `${goal.lost}`, unit: "kg", color: "var(--color-digestion)" }] : []),
-      ...(type !== "streak" ? [{ label: "Streak", value: String(streakDays), unit: "days", color: "var(--color-strength)" }] : []),
-    ].slice(0, 4),
-    progress: goal ? { label: `${goal.pct}% of the way to goal`, pct: goal.pct } : null,
-    badge: "Milestone 🏅",
+    start: { url: stages[1]?.url, label: "Day 1", sub: `(${STAGE_BODIES[1].name})` },
+    now: { url: stages[p.current_stage]?.url ?? stages[1]?.url, label: `Day ${day}`, sub: `(${STAGE_BODIES[p.current_stage].name})` },
+    heading: `${copy.title}!`,
+    lines: [copy.line, goal ? `−${goal.lost} kg so far · ${goal.pct}% of the way` : `${day} days into the journey`],
+    badge: streakDays > 1 ? `${streakDays}-Day Consistent Logging Streak! 🔥` : "Milestone 🏅",
   };
 }

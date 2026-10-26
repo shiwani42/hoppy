@@ -2,7 +2,8 @@ import "server-only";
 import { GoogleGenAI } from "@google/genai";
 import { hasKey, models } from "./config";
 import { z } from "zod";
-import { avatarPrompt } from "./prompts";
+import { STYLE_REF_JPEG } from "@/lib/avatar/style-ref";
+import { avatarPrompt, posePrompt, type Pose } from "./prompts";
 import { AiMeal, type AiMealT } from "./schemas";
 
 let client: GoogleGenAI | null = null;
@@ -12,12 +13,13 @@ function gemini() {
 }
 
 /**
- * Generates one body-stage avatar from the selfie. Returns null when no key is
- * configured, so the caller can fall back to the placeholder avatar.
+ * Generates one twin image from the selfie, in the reference style: a body stage
+ * (1–5) or a pose. Returns null when no key is configured, so the caller can fall
+ * back to the placeholder avatar.
  */
 export async function generateAvatarImage(
   selfie: { bytes: Buffer; mimeType: string },
-  stage: number,
+  what: number | Pose,
 ): Promise<{ bytes: Buffer; mimeType: string } | null> {
   if (!hasKey.gemini()) return null;
   const res = await gemini().models.generateContent({
@@ -27,7 +29,8 @@ export async function generateAvatarImage(
         role: "user",
         parts: [
           { inlineData: { mimeType: selfie.mimeType, data: selfie.bytes.toString("base64") } },
-          { text: avatarPrompt(stage) },
+          { inlineData: { mimeType: "image/jpeg", data: STYLE_REF_JPEG } },
+          { text: typeof what === "number" ? avatarPrompt(what) : posePrompt(what) },
         ],
       },
     ],

@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DayBars, WeightLine } from "@/components/charts/DayBars";
-import { PageHeader } from "@/components/PageHeader";
+import { IconDoc, StatIcon } from "@/components/icons";
+import { Button, Chip, Loading, TopBar } from "@/components/ui";
 import { loadProfile, type Profile } from "@/lib/profile";
 import { aggregate, type ReportNumbers, type SnapshotRow, type WeightRow } from "@/lib/reports/aggregate";
 import { STAT_KEYS } from "@/lib/rules/stats";
@@ -75,12 +76,16 @@ export function ReportsScreen() {
     }
   }
 
-  if (!profile || !x || !to) return <main className="flex flex-1 items-center justify-center font-display text-xl text-ink-soft">Reports…</main>;
+  if (!profile || !x || !to) return <Loading label="Reports…" />;
   const age = ageFromBirthYear(profile.birth_year);
 
   return (
-    <main className="flex flex-1 flex-col gap-5 px-5 pt-6 pb-10 print:px-0 print:pt-0">
-      <div className="print:hidden"><PageHeader title="Reports" /></div>
+    <main className="flex flex-1 flex-col gap-4 px-6 pt-[max(1.25rem,env(safe-area-inset-top))] pb-10 print:px-0 print:pt-0">
+      <div className="print:hidden">
+        <TopBar />
+        <h1 className="mt-3 font-display text-[32px] leading-tight font-extrabold">Aapki Health Report</h1>
+        <p className="text-[16px] text-ink-soft">A clean summary to show your doctor.</p>
+      </div>
 
       <header className="hidden print:block" data-testid="print-header">
         <p className="font-display text-2xl font-bold">Hoppy health report — {profile.name}</p>
@@ -92,43 +97,42 @@ export function ReportsScreen() {
 
       <div className="print:hidden flex gap-2" role="group" aria-label="Period">
         {PERIODS.map((p) => (
-          <button key={p} aria-pressed={period === p} onClick={() => { setPeriod(p); setSummary(null); }}
-            className={`h-11 flex-1 rounded-full font-display font-semibold ${period === p ? "bg-teal text-white" : "bg-card"}`}>
+          <Chip key={p} selected={period === p} onClick={() => { setPeriod(p); setSummary(null); }} className="flex-1">
             {p} days
-          </button>
+          </Chip>
         ))}
       </div>
 
       <section className="grid grid-cols-3 gap-2 text-center" aria-label="At a glance" data-testid="glance">
-        <div className="rounded-2xl bg-card py-3 shadow-sm"><p className="text-xs text-ink-soft">Days logged</p><p className="font-display text-3xl font-bold">{x.daysLogged}</p><p className="text-xs text-ink-soft">of {period}</p></div>
-        <div className="rounded-2xl bg-card py-3 shadow-sm"><p className="text-xs text-ink-soft">Strong days</p><p className="font-display text-3xl font-bold text-teal">{x.strongDays}</p><p className="text-xs text-ink-soft">{x.adherencePct}% adherence</p></div>
-        <div className="rounded-2xl bg-card py-3 shadow-sm"><p className="text-xs text-ink-soft">Weight</p><p className="font-display text-3xl font-bold">{x.weight ? `${x.weight.change > 0 ? "+" : ""}${x.weight.change}` : "—"}</p><p className="text-xs text-ink-soft">kg</p></div>
+        <div className="rounded-[18px] bg-energy-soft py-3"><p className="text-[12px] text-ink-soft">Days logged</p><p className="font-display text-[32px] leading-tight font-extrabold">{x.daysLogged}</p><p className="text-[12px] text-ink-soft">of {period}</p></div>
+        <div className="rounded-[18px] bg-teal-soft py-3"><p className="text-[12px] text-ink-soft">Strong days</p><p className="font-display text-[32px] leading-tight font-extrabold text-teal">{x.strongDays}</p><p className="text-[12px] text-ink-soft">{x.adherencePct}% adherence</p></div>
+        <div className="rounded-[18px] bg-digestion-soft py-3"><p className="text-[12px] text-ink-soft">Weight</p><p className="font-display text-[32px] leading-tight font-extrabold">{x.weight ? `${x.weight.change > 0 ? "+" : ""}${x.weight.change}` : "—"}</p><p className="text-[12px] text-ink-soft">kg</p></div>
       </section>
 
-      <section className="rounded-3xl bg-card p-4 shadow-sm print:shadow-none print:ring-1 print:ring-line" aria-label="Calories in vs out">
-        <h2 className="font-display text-lg font-bold">Calories in vs out</h2>
+      <section className="rounded-[22px] border border-[#f1e8d8] bg-card p-4 shadow-card print:shadow-none print:ring-1 print:ring-line" aria-label="Calories in vs out">
+        <h2 className="font-display text-[19px] font-bold">Calories in vs out</h2>
         <p className="text-sm text-ink-soft">Avg {x.avg.kcalIn} in · {x.avg.kcalOut} out · net {x.avg.net}{targets?.calories ? ` (target ${targets.calories})` : ""}</p>
         <DayBars values={series("kcal_in")} target={targets?.calories} color="var(--color-energy)" label="Calories in" unit="kcal" />
         <DayBars values={series("kcal_out")} color="var(--color-strength)" label="Calories out" unit="kcal" />
       </section>
 
-      <section className="rounded-3xl bg-card p-4 shadow-sm print:shadow-none print:ring-1 print:ring-line" aria-label="Weight trend">
-        <h2 className="font-display text-lg font-bold">Weight</h2>
+      <section className="rounded-[22px] border border-[#f1e8d8] bg-card p-4 shadow-card print:shadow-none print:ring-1 print:ring-line" aria-label="Weight trend">
+        <h2 className="font-display text-[19px] font-bold">Weight</h2>
         <WeightLine points={weights} />
       </section>
 
       <section className="grid grid-cols-2 gap-3" aria-label="Stats">
         {STAT_KEYS.map((k) => (
-          <div key={k} className="rounded-3xl bg-card p-3 shadow-sm" data-stat={k}>
-            <p className="font-display font-semibold">{STAT_META[k].emoji} {STAT_META[k].label}</p>
+          <div key={k} className={`rounded-[18px] p-3 bg-${k}-soft print:bg-white print:ring-1 print:ring-line`} data-stat={k}>
+            <p className="flex items-center gap-1.5 font-display text-[17px] font-bold"><StatIcon k={k} size={20} /> {STAT_META[k].label}</p>
             <p className="text-xs text-ink-soft">avg {x.stats[k] ?? "—"}/100</p>
             <DayBars values={series(k)} target={70} color={STAT_META[k].color} label={STAT_META[k].label} unit="/100" />
           </div>
         ))}
       </section>
 
-      <section className="rounded-3xl bg-card p-4 shadow-sm print:shadow-none print:ring-1 print:ring-line" aria-label="Averages">
-        <h2 className="font-display text-lg font-bold">Daily averages</h2>
+      <section className="rounded-[22px] border border-[#f1e8d8] bg-card p-4 shadow-card print:shadow-none print:ring-1 print:ring-line" aria-label="Averages">
+        <h2 className="font-display text-[19px] font-bold">Daily averages</h2>
         <dl className="mt-2 grid grid-cols-2 gap-y-1 text-sm">
           <dt className="text-ink-soft">Protein</dt><dd>{x.avg.proteinG} g{targets?.proteinG ? ` / ${targets.proteinG} g` : ""}</dd>
           <dt className="text-ink-soft">Fibre</dt><dd>{x.avg.fiberG} g / {targets?.fiberG} g</dd>
@@ -138,17 +142,17 @@ export function ReportsScreen() {
         </dl>
       </section>
 
-      <section className="rounded-3xl bg-card p-4 shadow-sm print:shadow-none print:ring-1 print:ring-line" aria-label="Summary">
-        <h2 className="font-display text-lg font-bold">Summary</h2>
+      <section className="rounded-[22px] border border-[#f1e8d8] bg-card p-4 shadow-card print:shadow-none print:ring-1 print:ring-line" aria-label="Summary">
+        <h2 className="font-display text-[19px] font-bold">Summary</h2>
         {summary ? (
           <>
             <p className="mt-2 whitespace-pre-line leading-relaxed" data-testid="summary">{summary.text}</p>
             {summary.demo && <p className="print:hidden mt-2 text-xs text-ink-soft">Written from your numbers by Hoppy&apos;s template — connect Gemini for an AI-written summary.</p>}
           </>
         ) : (
-          <button onClick={writeSummary} disabled={writing} className="print:hidden mt-2 h-12 w-full rounded-full bg-teal font-display font-semibold text-white disabled:opacity-50">
+          <Button size="md" variant="soft" onClick={writeSummary} disabled={writing} className="print:hidden mt-2">
             {writing ? "Writing…" : "✍️ Write my summary"}
-          </button>
+          </Button>
         )}
       </section>
 
@@ -157,9 +161,9 @@ export function ReportsScreen() {
         Targets follow ICMR-NIN 2020/2024 and WHO 2020 guidance. Please discuss changes with your doctor.
       </p>
 
-      <button onClick={() => window.print()} className="print:hidden h-14 rounded-full bg-ink font-display text-lg font-semibold text-cream">
-        ⬇ Export PDF for my doctor
-      </button>
+      <Button onClick={() => window.print()} className="print:hidden">
+        <IconDoc size={22} /> Export PDF for my doctor
+      </Button>
     </main>
   );
 }

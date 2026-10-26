@@ -2,28 +2,52 @@
 
 /* Hoppy theme — see spec.md > Look and Feel */
 @theme {
-  --color-cream: #fbf6ee;
+  /* Sampled from the reference screens (images/Gemini_Generated_Image_*.png). */
+  --color-cream: #fbf5e9;
+  --color-cream-deep: #f3ead8;
+  --color-sand: #efe6d5;
+  --color-peach: #f7e2c3;
   --color-card: #ffffff;
-  --color-ink: #1f1b16;
-  --color-ink-soft: #6b6157;
-  --color-line: #ece3d6;
-  --color-teal: #0f6e6e;
-  --color-teal-soft: #e3f1ef;
-  --color-turmeric: #e8a317;
+  --color-ink: #231f1b;
+  --color-ink-soft: #6f675d;
+  --color-ink-faint: #a39a8c;
+  --color-line: #ece3d2;
+  --color-teal: #10686a;
+  --color-teal-deep: #0b5254;
+  --color-teal-soft: #dcecea;
+  --color-aqua: #00b2bc;
+  --color-turmeric: #dc9813;
+  --color-saffron-soft: #fcebcd;
+  --color-gold: #c9a45c;
+  --color-night: #1e1a17;
 
-  --color-strength: #d64545;
-  --color-muscle: #f08a24;
-  --color-digestion: #4c9a2a;
-  --color-hydration: #3a8dde;
-  --color-energy: #e8a317;
-  --color-rest: #4b4e9e;
+  --color-strength: #d24848;
+  --color-strength-soft: #f8d7d5;
+  --color-muscle: #f1a858;
+  --color-muscle-soft: #fee5c9;
+  --color-digestion: #4d9831;
+  --color-digestion-soft: #d8e8cc;
+  --color-hydration: #428ed8;
+  --color-hydration-soft: #d5e7f5;
+  --color-energy: #e49c16;
+  --color-energy-soft: #fee7be;
+  --color-rest: #484a98;
+  --color-rest-soft: #dad7ea;
 
   --font-display: var(--font-baloo), ui-rounded, system-ui, sans-serif;
-  --font-sans: var(--font-mukta), system-ui, sans-serif;
+  --font-sans: var(--font-inter), var(--font-mukta), system-ui, sans-serif;
+
+  --shadow-card: 0 1px 2px rgb(60 40 10 / 0.05), 0 8px 24px rgb(60 40 10 / 0.07);
+  --shadow-lift: 0 2px 4px rgb(60 40 10 / 0.06), 0 16px 36px rgb(60 40 10 / 0.12);
+  --shadow-teal: 0 8px 20px rgb(16 104 106 / 0.28);
 
   --animate-float: float 4s ease-in-out infinite;
   --animate-pop: pop 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) both;
   --animate-fade-up: fade-up 0.45s ease-out both;
+  --animate-wave: wave 3.2s ease-in-out infinite;
+  --animate-rise: rise 2.8s ease-in infinite;
+  --animate-confetti: confetti 2.6s ease-out both;
+  --animate-shimmer: shimmer 1.6s linear infinite;
 }
 
 @keyframes float {
@@ -47,6 +71,50 @@
   }
 }
 
+@keyframes wave {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(-25%);
+  }
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.9;
+  }
+  to {
+    transform: translateY(-120px);
+    opacity: 0;
+  }
+}
+
+@keyframes confetti {
+  from {
+    transform: translate(0, 0) rotate(0);
+    opacity: 1;
+  }
+  to {
+    transform: translate(var(--dx, 0), var(--dy, 120px)) rotate(var(--rot, 360deg));
+    opacity: 0;
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: -200% 0;
+  }
+  to {
+    background-position: 200% 0;
+  }
+}
+
 @keyframes fade-up {
   from {
     transform: translateY(10px);
@@ -59,14 +127,69 @@
 }
 
 html {
-  font-size: 17px;
+  font-size: 16px;
 }
 
 body {
-  background: var(--color-cream);
+  /* Kolam dots frame the phone column on wide screens, as in the references. */
+  background:
+    radial-gradient(circle at 12px 12px, rgb(214 190 150 / 0.35) 1.6px, transparent 2px) 0 0 / 24px 24px,
+    var(--color-cream-deep);
   color: var(--color-ink);
   font-family: var(--font-sans);
   -webkit-tap-highlight-color: transparent;
+}
+
+/* The ruler slider (drip questions): a saffron knob on a thin track. */
+.ruler {
+  appearance: none;
+  height: 28px;
+  background: transparent;
+}
+.ruler::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 6px;
+  background: linear-gradient(to right, var(--color-turmeric) var(--fill, 50%), #e6dccb var(--fill, 50%));
+}
+.ruler::-moz-range-track {
+  height: 6px;
+  border-radius: 6px;
+  background: linear-gradient(to right, var(--color-turmeric) var(--fill, 50%), #e6dccb var(--fill, 50%));
+}
+.ruler::-webkit-slider-thumb {
+  appearance: none;
+  margin-top: -11px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--color-turmeric);
+  border: 4px solid #fff;
+  box-shadow: 0 2px 8px rgb(120 80 0 / 0.35);
+}
+.ruler::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--color-turmeric);
+  border: 4px solid #fff;
+  box-shadow: 0 2px 8px rgb(120 80 0 / 0.35);
+}
+
+/* The tumbler's water surface slides one wave length (80px in SVG units), forever. */
+.wave-svg {
+  animation: wave-svg 2.4s linear infinite;
+}
+@keyframes wave-svg {
+  to {
+    transform: translateX(-80px);
+  }
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

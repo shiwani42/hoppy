@@ -40,7 +40,8 @@ export async function parseWithFallback(text: string): Promise<Parsed & { ai?: b
 
   if (ai.kind === "meal" && ai.items?.length) {
     const items = ai.items.map(anchorItem);
-    return { kind: "meal", items: local.kind === "meal" ? [...local.items, ...items] : items, unknown: [], ai: true };
+    const water = local.kind === "meal" && local.waterMl ? { waterMl: local.waterMl } : {};
+    return { kind: "meal", items: local.kind === "meal" ? [...local.items, ...items] : items, unknown: [], ...water, ai: true };
   }
   if (ai.kind === "activity" && ai.activity_key) {
     const a = activityByKey(ai.activity_key);

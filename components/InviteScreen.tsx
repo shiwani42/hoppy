@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Confetti } from "@/components/art";
+import { buttonClass } from "@/components/ui";
 import { acceptInvite, PENDING_INVITE } from "@/lib/community/client";
 import { loadProfile } from "@/lib/profile";
 import { ensureSession } from "@/lib/supabase/client";
@@ -32,12 +34,13 @@ export function InviteScreen({ code }: { code: string }) {
   }, [code, router]);
 
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-6 px-6 text-center">
-      <p className="font-display text-5xl" aria-hidden>{state?.ok === false ? "🤔" : "🤝"}</p>
-      <h1 className="font-display text-3xl font-bold" role="status">{state?.text ?? "Connecting you…"}</h1>
+    <main className="relative flex flex-1 flex-col items-center justify-center gap-6 px-6 text-center">
+      {state?.ok && <Confetti burst={1} count={36} spread={200} />}
+      <span className="flex h-28 w-28 items-center justify-center rounded-full bg-peach text-[56px]" aria-hidden>{state?.ok === false ? "🤔" : "🤝"}</span>
+      <h1 className="font-display text-[30px] leading-tight font-extrabold" role="status">{state?.text ?? "Connecting you…"}</h1>
       {state && (
-        <Link href={state.ok ? "/community" : "/"} className="h-14 w-full max-w-xs rounded-full bg-teal font-display text-lg font-semibold leading-[3.5rem] text-white">
-          {state.ok ? "See the leaderboard" : "Go home"}
+        <Link href={state.ok ? "/community" : "/"} className={`${buttonClass()} max-w-xs`}>
+          {state.ok ? "See Hoppy Friends" : "Go home"}
         </Link>
       )}
     </main>

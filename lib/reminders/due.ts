@@ -11,6 +11,15 @@ export const WINDOW_MIN = 10;
 export type ReminderRow = { meal_type: keyof typeof MEAL_REMINDERS; time: string; enabled: boolean };
 export type MedRow = { id: string; name: string; dose: string | null; times: string[] };
 export type Push = { key: string; title: string; body: string; url: string };
+export type SnoozeRow = { id: string; title: string; body: string; url: string; remind_at: string };
+
+/** Water nudges through the day when the user turns them on (Paani Ka Tumbler). */
+export const WATER_TIMES = ["10:30", "12:30", "15:00", "17:30", "19:30"];
+const WATER_LINES = [
+  "Paani break! Your twin is a little thirsty 💧",
+  "One glass now and your tumbler fills up a notch 💧",
+  "Hydration check — a glass of water, Shabaash in advance 💧",
+];
 
 const minutes = (hm: string) => Number(hm.slice(0, 2)) * 60 + Number(hm.slice(3, 5));
 const inWindow = (time: string, now: string) => {
@@ -25,6 +34,10 @@ export function duePushes(i: {
   takenDoses: Set<string>;
   loggedMealTypes: Set<string>;
   sentKeys: Set<string>;
+  water?: boolean;
+  snoozes?: SnoozeRow[];
+  /** Current time, for snoozes (absolute timestamps). */
+  at?: Date;
 }): Push[] {
   const out: Push[] = [];
   for (const r of i.reminders) {
@@ -40,6 +53,15 @@ export function duePushes(i: {
         out.push({ key, title: "Hoppy", body: `💊 Time for ${m.name}${m.dose ? ` (${m.dose})` : ""}`, url: "/meds" });
       }
     }
+  }
+  if (i.water) {
+    WATER_TIMES.forEach((t, n) => {
+      const key = `water:${t}`;
+      if (inWindow(t, i.now) && !i.sentKeys.has(key)) out.push({ key, title: "Hoppy", body: WATER_LINES[n % WATER_LINES.length], url: "/water" });
+    });
+  }
+  for (const s of i.snoozes ?? []) {
+    if (new Date(s.remind_at).getTime() <= (i.at ?? new Date()).getTime()) out.push({ key: `snooze:${s.id}`, title: s.title, body: s.body, url: s.url });
   }
   return out;
 }

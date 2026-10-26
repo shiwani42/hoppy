@@ -24,9 +24,32 @@ export function deviceSpeech(): (new () => SR) | null {
 
 export type Recording = { stop: () => Promise<{ audio?: Blob; transcript?: string }> };
 
-export async function startRecording(useServer: boolean): Promise<Recording> {
+/** Feeds a 0–1 loudness level to `onLevel` about 30 times a second; returns a stop function. */
+function meter(stream: MediaStream, onLevel: (v: number) => void) {
+  const ctx = new AudioContext();
+  const an = ctx.createAnalyser();
+  an.fftSize = 256;
+  ctx.createMediaStreamSource(stream).connect(an);
+  const buf = new Uint8Array(an.frequencyBinCount);
+  let raf = 0;
+  const tick = () => {
+    an.getByteTimeDomainData(buf);
+    let sum = 0;
+    for (const b of buf) sum += ((b - 128) / 128) ** 2;
+    onLevel(Math.min(1, Math.sqrt(sum / buf.length) * 4));
+    raf = requestAnimationFrame(tick);
+  };
+  tick();
+  return () => {
+    cancelAnimationFrame(raf);
+    ctx.close().catch(() => {});
+  };
+}
+
+export async function startRecording(useServer: boolean, onLevel?: (v: number) => void): Promise<Recording> {
   if (useServer && typeof MediaRecorder !== "undefined") {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const stopMeter = onLevel ? meter(stream, onLevel) : () => {};
     const rec = new MediaRecorder(stream);
     const chunks: Blob[] = [];
     rec.ondataavailable = (e) => e.data.size && chunks.push(e.data);
@@ -35,6 +58,7 @@ export async function startRecording(useServer: boolean): Promise<Recording> {
       stop: () =>
         new Promise((resolve) => {
           rec.onstop = () => {
+            stopMeter();
             stream.getTracks().forEach((t) => t.stop());
             resolve({ audio: new Blob(chunks, { type: rec.mimeType || "audio/webm" }) });
           };
@@ -58,9 +82,23 @@ export async function startRecording(useServer: boolean): Promise<Recording> {
   sr.onerror = () => ended();
   sr.onend = () => ended();
   sr.start();
+  // The level meter is a nicety: on-device speech works without it.
+  let stopMeter = () => {};
+  let stream: MediaStream | null = null;
+  if (onLevel) {
+    navigator.mediaDevices
+      ?.getUserMedia({ audio: true })
+      .then((s) => {
+        stream = s;
+        stopMeter = meter(s, onLevel);
+      })
+      .catch(() => {});
+  }
   return {
     stop: async () => {
       sr.stop();
+      stopMeter();
+      (stream as MediaStream | null)?.getTracks().forEach((t) => t.stop());
       await done;
       return { transcript: transcript.trim() };
     },

@@ -33,3 +33,20 @@ describe("due reminders", () => {
     expect(localClock("Asia/Kolkata", new Date("2026-10-26T19:00:00Z"))).toEqual({ date: "2026-10-27", hm: "00:30" });
   });
 });
+
+describe("duePushes — water and snoozes", () => {
+  const base = { reminders: [], meds: [], takenDoses: new Set<string>(), loggedMealTypes: new Set<string>(), sentKeys: new Set<string>() };
+
+  it("sends water nudges only when turned on, once per slot", () => {
+    expect(duePushes({ ...base, now: "10:32" }).length).toBe(0);
+    const on = duePushes({ ...base, now: "10:32", water: true });
+    expect(on).toMatchObject([{ key: "water:10:30", url: "/water" }]);
+    expect(duePushes({ ...base, now: "10:32", water: true, sentKeys: new Set(["water:10:30"]) }).length).toBe(0);
+  });
+
+  it("sends a snooze once its time has come", () => {
+    const s = { id: "s1", title: "Hoppy", body: "💊 Time for Triphala", url: "/meds", remind_at: "2026-10-26T15:45:00Z" };
+    expect(duePushes({ ...base, now: "21:00", snoozes: [s], at: new Date("2026-10-26T15:40:00Z") }).length).toBe(0);
+    expect(duePushes({ ...base, now: "21:16", snoozes: [s], at: new Date("2026-10-26T15:46:00Z") })).toMatchObject([{ key: "snooze:s1", body: "💊 Time for Triphala" }]);
+  });
+});

@@ -37,7 +37,7 @@ export function placeholderAvatarSvg(stage: number, skinTone = "#c68863") {
       <stop offset="0" stop-color="#14807f"/><stop offset="1" stop-color="#0f6e6e"/>
     </linearGradient>
   </defs>
-  <rect width="512" height="640" fill="url(#bg)"/>
+
   <ellipse cx="${cx}" cy="606" rx="${120 * b.waist}" ry="14" fill="#1f1b16" opacity=".08"/>
   <!-- legs -->
   <rect x="${cx - ww + 8}" y="430" width="${ww - 14}" height="150" rx="26" fill="#2a2f45"/>

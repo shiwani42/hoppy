@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 
-/** Bottom sheet used for confirm, search and stats. */
+/** Bottom sheet (menu, small forms, request consult). */
 export function Sheet({
   open,
   onClose,
@@ -22,14 +23,16 @@ export function Sheet({
   }, [open, onClose]);
 
   if (!open) return null;
-  return (
-    <div className="fixed inset-0 z-40 flex items-end justify-center" role="dialog" aria-modal="true" aria-label={title}>
-      <button aria-label="Close" className="absolute inset-0 bg-ink/30" onClick={onClose} />
-      <div className="relative max-h-[88dvh] w-full max-w-md overflow-y-auto rounded-t-[2rem] bg-cream px-5 pt-3 pb-8 shadow-2xl animate-fade-up">
-        <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-line" />
-        <h2 className="mb-4 font-display text-2xl font-bold">{title}</h2>
+  // Portalled to <body> so a sheet opened from a header or card sits above everything.
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-end justify-center" role="dialog" aria-modal="true" aria-label={title}>
+      <button aria-label="Close" className="absolute inset-0 bg-[#2b2218]/35 backdrop-blur-[2px]" onClick={onClose} />
+      <div className="relative max-h-[88dvh] w-full max-w-md overflow-y-auto rounded-t-[28px] bg-cream px-6 pt-3 pb-[max(2rem,env(safe-area-inset-bottom))] shadow-lift animate-fade-up">
+        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[#e2d7c3]" />
+        <h2 className="mb-4 font-display text-[26px] leading-tight font-extrabold">{title}</h2>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

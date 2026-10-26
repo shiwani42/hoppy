@@ -13,7 +13,7 @@ const SAMPLE_MEALS: AiMealT[] = [
     items: [
       { name: "Dal tadka", quantity: 1, unit: "katori", grams: 150, kcal: 180, protein_g: 9.8, fiber_g: 5.3, carbs_g: 22, fat_g: 6, sodium_mg: 495, confidence: 0.82, alternatives: [] },
       { name: "Steamed rice", quantity: 1, unit: "katori", grams: 150, kcal: 195, protein_g: 4, fiber_g: 0.6, carbs_g: 42, fat_g: 0.5, sodium_mg: 2, confidence: 0.9, alternatives: [] },
-      { name: "Bhindi sabzi", quantity: 1, unit: "katori", grams: 120, kcal: 114, protein_g: 2.8, fiber_g: 4.6, carbs_g: 9.6, fat_g: 7.2, sodium_mg: 336, confidence: 0.55, alternatives: ["Mixed veg curry", "Aloo sabzi"] },
+      { name: "Aloo gobi", quantity: 0.5, unit: "katori", grams: 75, kcal: 79, protein_g: 2, fiber_g: 2.3, carbs_g: 8.3, fat_g: 4.5, sodium_mg: 233, confidence: 0.55, alternatives: ["Mixed veg curry", "Aloo sabzi"] },
     ],
   },
   {
@@ -40,8 +40,9 @@ const SAMPLE_MEALS: AiMealT[] = [
   },
 ];
 
-/** Deterministic per photo, so the same picture gives the same demo meal. */
-export function mockMeal(image: Buffer): AiMealT {
+/** Deterministic per photo, so the same picture gives the same demo meal; the bundled sample photo is dal, rice and aloo gobi. */
+export function mockMeal(image: Buffer, sample = false): AiMealT {
+  if (sample) return SAMPLE_MEALS[0];
   let h = 0;
   for (let i = 0; i < image.length; i += 97) h = (h * 31 + image[i]) >>> 0;
   return SAMPLE_MEALS[h % SAMPLE_MEALS.length];

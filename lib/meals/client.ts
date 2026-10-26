@@ -4,7 +4,7 @@ import { api, supabase } from "@/lib/supabase/client";
 import { sumNutrients, type Nutrients } from "./foods";
 import type { MealItem, MealType } from "./types";
 
-export type SavedMealItem = Nutrients & { id: string; name: string; quantity: number; unit: string; grams: number; sticker: string | null };
+export type SavedMealItem = Nutrients & { id: string; name: string; quantity: number; unit: string; grams: number; sticker: string | null; food_id: string | null };
 export type SavedMeal = {
   id: string;
   eaten_at: string;
@@ -137,6 +137,6 @@ export function toEditable(it: SavedMealItem): MealItem {
     kcal: Number(it.kcal), protein_g: Number(it.protein_g), fiber_g: Number(it.fiber_g),
     carbs_g: Number(it.carbs_g), fat_g: Number(it.fat_g), sodium_mg: Number(it.sodium_mg),
     per100g: { kcal: per(it.kcal), protein_g: per(it.protein_g), fiber_g: per(it.fiber_g), carbs_g: per(it.carbs_g), fat_g: per(it.fat_g), sodium_mg: per(it.sodium_mg) },
-    sticker: it.sticker ?? "🍽️", food_id: null, confidence: 1, alternatives: [],
+    sticker: it.sticker ?? "🍽️", food_id: it.food_id ?? null, confidence: 1, alternatives: [],
   };
 }

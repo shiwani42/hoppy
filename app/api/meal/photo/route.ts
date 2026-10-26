@@ -20,7 +20,8 @@ export const POST = route(async (req) => {
   if (up.error) throw up.error;
 
   try {
-    const analysis = await analyzePhoto(bytes, mimeType);
+    // "Try a sample meal" sends the bundled photo (public/art/sample-meal.jpg).
+    const analysis = await analyzePhoto(bytes, mimeType, form?.get("sample") === "1");
     return Response.json({ photo_path, ...analysis });
   } catch {
     throw new HttpError(503, "I'm a bit slow right now. Search for your dish instead?");

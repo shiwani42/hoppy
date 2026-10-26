@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Baloo_2, Mukta } from "next/font/google";
+import { Baloo_2, Inter, Mukta } from "next/font/google";
 import { ServiceWorker } from "@/components/ServiceWorker";
 import "./globals.css";
 
@@ -7,6 +7,11 @@ const baloo = Baloo_2({
   variable: "--font-baloo",
   subsets: ["latin", "devanagari"],
   weight: ["500", "600", "700", "800"],
+});
+
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
 });
 
 const mukta = Mukta({
@@ -25,7 +30,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#fbf6ee",
+  themeColor: "#fbf5e9",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
@@ -33,9 +38,9 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${baloo.variable} ${mukta.variable} h-full antialiased`}>
+    <html lang="en" className={`${baloo.variable} ${inter.variable} ${mukta.variable} h-full antialiased`}>
       <body className="min-h-full">
-        <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col print:max-w-none">{children}</div>
+        <div className="relative mx-auto flex min-h-dvh w-full max-w-md flex-col bg-cream sm:shadow-[0_0_60px_rgb(60_40_10/0.12)] print:max-w-none print:shadow-none">{children}</div>
         <ServiceWorker />
       </body>
     </html>

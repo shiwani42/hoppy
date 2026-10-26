@@ -11,6 +11,8 @@ const nextConfig: NextConfig = {
       },
     },
   },
+  // The floating dev badge sits on top of the camera button.
+  devIndicators: false,
   // Lets a phone on the same Wi-Fi load the dev server (npm run dev:https).
   allowedDevOrigins: ["192.168.*.*", "10.*.*.*"],
   async headers() {

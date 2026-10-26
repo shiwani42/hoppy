@@ -19,6 +19,7 @@ export type Profile = {
   start_weight_kg: number | null;
   milestones: { stage?: number; weight?: number; streak?: number };
   timezone: string;
+  water_reminders: boolean;
   created_at: string;
 };
 
