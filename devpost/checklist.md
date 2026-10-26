@@ -89,7 +89,7 @@ Build mode: fast (learner asked to finish everything end to end locally before t
   Learner check: On your phone, share today's card to WhatsApp or Instagram Stories. Would you be proud to post it?
   Commit: `Daily share card with native share`
 
-- [ ] **9. See your history on a calendar**
+- [x] **9. See your history on a calendar**
   Becomes usable: A month calendar shows food stickers on each day you logged; tapping a day shows its meals and totals.
   Why now: First Tier 2 habit feature; it reuses the data that's already flowing.
   PRD ref: `prd.md > Diet Calendar and History`

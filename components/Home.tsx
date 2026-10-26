@@ -29,7 +29,10 @@ import {
 import { mealTypeFor, type MealAnalysis, type MealItem, type MealType } from "@/lib/meals/types";
 import { nextQuestion, type DripEvent, type Question } from "@/lib/onboarding/nextQuestion";
 import { isQuestion, type Parsed, type ParsedActivity } from "@/lib/parse/text";
+import { dueMilestone, type Milestone } from "@/lib/rules/milestones";
 import { nudgeFor } from "@/lib/rules/nudges";
+import { goalProgress } from "@/lib/share/data";
+import { loadStreak } from "@/lib/stats/streak";
 import type { StageProgress } from "@/lib/rules/stages";
 import { progressFor, stageUp } from "@/lib/stages/client";
 import { loadProfile, saveProfile, type Profile } from "@/lib/profile";
@@ -60,6 +63,8 @@ export function Home() {
   const [stages, setStages] = useState<Record<number, AvatarStage>>({});
   const [progress, setProgress] = useState<StageProgress | null>(null);
   const [celebrate, setCelebrate] = useState<number | null>(null);
+  const [streakDays, setStreakDays] = useState(0);
+  const [milestone, setMilestone] = useState<Milestone | null>(null);
   const avatar = profile ? (stages[profile.current_stage] ?? stages[1] ?? null) : null;
   const [today, setToday] = useState<Today | null>(null);
   const meals = today?.meals ?? [];
@@ -119,20 +124,34 @@ export function Home() {
     setTimeout(() => setReacting(false), 700);
   }
 
-  /** Stage-up check after the day's snapshot is saved (lib/rules/stages.ts). */
+  /**
+   * After each log: stage-up check (lib/rules/stages.ts), then the streak and
+   * any milestone worth a share card (lib/rules/milestones.ts).
+   */
   const checkStage = useCallback(async (p: Profile) => {
     const prog = await progressFor(p);
+    const days = await loadStreak();
+    setStreakDays(days);
     if (prog.canStageUp) {
       const up = await stageUp(p);
-      setProfile(up);
-      setProgress(await progressFor(up));
+      // The celebration itself offers the stage card, so mark it as offered.
+      const marked = await saveProfile({ milestones: { ...up.milestones, stage: up.current_stage } });
+      setProfile(marked);
+      setProgress(await progressFor(marked));
       setStages(await loadAvatarStages());
-      setCelebrate(up.current_stage);
-      return up;
+      setCelebrate(marked.current_stage);
+      return marked;
     }
     setProgress(prog);
+    setMilestone(dueMilestone({ stage: p.current_stage, kgLost: goalProgress(p)?.lost ?? null, streak: days }, p.milestones ?? {}));
     return p;
   }, []);
+
+  async function markMilestone(m: Milestone) {
+    if (!profile) return;
+    setProfile(await saveProfile({ milestones: { ...profile.milestones, [m.type]: m.value } }));
+    setMilestone(null);
+  }
 
   useEffect(() => {
     (async () => {
@@ -325,6 +344,11 @@ export function Home() {
         <h1 className="font-display text-3xl font-bold">
           {greeting()}, {profile.name}.
         </h1>
+        {streakDays > 0 && (
+          <p className="mt-1 rounded-full bg-turmeric/15 px-3 py-1 text-sm font-semibold" data-testid="streak">
+            🔥 {streakDays}-day streak
+          </p>
+        )}
         {today && (
           <div className="absolute right-0 top-32 z-10">
             <Tumbler ml={today.totals.waterMl} target={today.targets.waterMl} glassMl={GLASS_ML} onAdd={() => water(1)} onUndo={() => water(-1)} />
@@ -350,6 +374,26 @@ export function Home() {
       </header>
 
       <section className="mt-6 flex flex-col gap-4 pb-4" aria-label="Today">
+        {milestone && (
+          <div className="rounded-[1.75rem] bg-gradient-to-br from-turmeric/25 to-teal-soft p-4 shadow-sm animate-pop" role="status" data-testid="milestone">
+            <p className="font-display text-xl font-bold">
+              {milestone.type === "streak" ? `🔥 ${milestone.value}-day streak!` : milestone.type === "weight" ? `🎉 ${milestone.value} kg lighter!` : `🏅 Stage ${milestone.value}!`}
+            </p>
+            <p className="text-ink-soft">That&apos;s worth showing off. Make a card?</p>
+            <div className="mt-3 flex gap-2">
+              <Link
+                href={`/share/milestone?type=${milestone.type}&value=${milestone.value}`}
+                onClick={() => markMilestone(milestone)}
+                className="flex h-11 flex-1 items-center justify-center rounded-full bg-teal font-display font-semibold text-white"
+              >
+                Share it ↗
+              </Link>
+              <button onClick={() => markMilestone(milestone)} className="h-11 rounded-full px-4 font-display font-semibold text-ink-soft">
+                Not now
+              </button>
+            </div>
+          </div>
+        )}
         {meals.length === 0 && !today?.activities.length && !reading && (
           <p className="rounded-3xl bg-card px-5 py-4 text-center font-display text-lg shadow-sm">
             What did you last eat? Snap it or tell me. 🍽️
@@ -461,7 +505,16 @@ export function Home() {
         />
       )}
       {celebrate && (
-        <Celebration stage={celebrate} url={stages[celebrate]?.url} onClose={() => setCelebrate(null)} />
+        <Celebration
+          stage={celebrate}
+          url={stages[celebrate]?.url}
+          onClose={() => setCelebrate(null)}
+          action={
+            <Link href={`/share/milestone?type=stage&value=${celebrate}`} className="flex h-12 items-center justify-center rounded-full bg-turmeric font-display font-semibold text-white">
+              Share this milestone ↗
+            </Link>
+          }
+        />
       )}
 
       {activityDraft && (

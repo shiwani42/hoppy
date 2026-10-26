@@ -17,6 +17,7 @@ export type Profile = {
   asked: Record<string, string>;
   stage_changed_at: string | null;
   start_weight_kg: number | null;
+  milestones: { stage?: number; weight?: number; streak?: number };
   created_at: string;
 };
 
