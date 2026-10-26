@@ -36,7 +36,7 @@ async function loadWeek(): Promise<Week> {
 
 const COPY = {
   streak: (v: number) => ({ title: `${v}-Day Streak!`, badge: `${v} DAYS ACTIVE`, heading: `Aapka ${v}-Day Consistency Badge! 🎉`, body: `Shabaash! You've logged every single day for ${v} days. Your twin is looking strong — and so are your habits!` }),
-  stage: (v: number) => ({ title: `Stage ${v} Unlocked!`, badge: `STAGE ${v}`, heading: `Welcome to “${STAGE_BODIES[v].name}”! 🎉`, body: "Weeks of strong days, made visible. Your twin just levelled up with you — never back, only forward." }),
+  stage: (v: number) => ({ title: `Stage ${v} Unlocked!`, badge: `STAGE ${v}`, heading: `Welcome to “${STAGE_BODIES[v].name}”! 🎉`, body: "Weeks of strong days, made visible. Your twin moves up a stage — and stages only ever go forward." }),
   weight: (v: number) => ({ title: `${v} kg Lighter!`, badge: `−${v} KG`, heading: "Steady, safe progress! 🎉", body: `That's ${v} kg down at a healthy pace. One plate, one walk, one glass at a time.` }),
 } as const;
 

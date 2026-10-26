@@ -188,7 +188,7 @@ export function Home() {
       await ensureSession();
       const p = await loadProfile();
       const tw = await loadTwin();
-      if (!p?.name || !tw.stages[1]) {
+      if (!p?.name || (!tw.stages[1] && !tw.poses.bust)) {
         router.replace("/onboarding");
         return;
       }
@@ -197,7 +197,9 @@ export function Home() {
       const t = await refresh(p);
       await checkStage(p);
       // Stages and poses may still be generating in the background after onboarding.
-      if (Object.keys(tw.stages).length < 5 || !tw.poses.bust) setTimeout(async () => setTwin(await loadTwin(true)), 9000);
+      if (Object.keys(tw.stages).length < 5 || Object.keys(tw.poses).length < 6) {
+        for (const ms of [15000, 45000, 90000]) setTimeout(async () => setTwin(await loadTwin(true)), ms);
+      }
       if (!maybeAsk(p, "app_open")) maybeAsk(p, "morning", t);
       const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
       if (tz && p.timezone !== tz) setProfile(await saveProfile({ timezone: tz }));

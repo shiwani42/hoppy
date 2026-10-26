@@ -139,7 +139,7 @@ export function SettingsScreen() {
           <h2 className="font-display text-[20px] font-bold">Your twin</h2>
           <input ref={selfie} type="file" accept="image/*" capture="user" hidden onChange={(e) => retake(e.target.files?.[0])} data-testid="retake-input" />
           <button disabled={avatarBusy} onClick={() => selfie.current?.click()} className="mt-1 font-display text-[16px] font-semibold text-teal disabled:opacity-50">
-            {avatarBusy ? "Becoming you again…" : "📸 Retake selfie & regenerate"}
+            {avatarBusy ? "Making your new twin…" : "📸 Retake selfie & regenerate"}
           </button>
         </div>
       </section>

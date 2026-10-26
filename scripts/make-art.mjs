@@ -1,24 +1,37 @@
-// Generates Hoppy's static art with Gemini (food stickers, expert photos, demo
-// people). Run: node scripts/make-art.mjs [group…] [--force]
+// Generates Hoppy's static art (food stickers, expert photos, demo people) with
+// OpenAI images, or Gemini when only GEMINI_API_KEY is set.
+// Run: node scripts/make-art.mjs [group…] [--force]
 // Groups: food, experts, demo. Updates public/art/manifest.json. Existing files are kept unless --force.
 import { GoogleGenAI } from "@google/genai";
+import OpenAI from "openai";
 import sharp from "sharp";
 import { existsSync } from "node:fs";
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
-import { cutout } from "../lib/avatar/cutout.ts";
+import { cutout, isCutOut } from "../lib/avatar/cutout.ts";
 
 const FOODS = JSON.parse(await readFile("data/indian-foods.json", "utf8")).foods;
 
-process.loadEnvFile(".env.local");
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-const MODEL = process.env.GEMINI_IMAGE_MODEL ?? "gemini-3.1-flash-image-preview";
+// .env.local wins over the shell: a stale exported OPENAI_API_KEY must not shadow it.
+const env = { ...process.env };
+for (const line of (await readFile(".env.local", "utf8")).split("\n")) {
+  const i = line.indexOf("=");
+  if (i > 0 && !line.startsWith("#")) env[line.slice(0, i).trim()] = line.slice(i + 1).trim();
+}
+const openai = env.OPENAI_API_KEY ? new OpenAI({ apiKey: env.OPENAI_API_KEY }) : null;
+const gemini = env.GEMINI_API_KEY ? new GoogleGenAI({ apiKey: env.GEMINI_API_KEY }) : null;
+if (!openai && !gemini) {
+  console.error("Add OPENAI_API_KEY (or GEMINI_API_KEY) to .env.local first.");
+  process.exit(1);
+}
+const OPENAI_MODEL = env.OPENAI_IMAGE_MODEL ?? "gpt-image-1.5";
+const GEMINI_MODEL = env.GEMINI_IMAGE_MODEL ?? "gemini-3.1-flash-image-preview";
 const force = process.argv.includes("--force");
 const groups = process.argv.slice(2).filter((a) => !a.startsWith("--"));
 
 const STICKER =
   "A single glossy 3D food sticker illustration, soft clay render, warm studio light, " +
-  "seen from a 3/4 top angle, centred, filling 80% of the frame, on a plain pure white background, " +
+  "seen from a 3/4 top angle, centred, filling 80% of the frame, isolated on a plain white (or transparent) background, " +
   "no shadow on the background, no text, no plate border cut off. Dish: ";
 
 const PHOTO =
@@ -75,23 +88,41 @@ const ART = {
   ],
 };
 
-async function generate(prompt) {
-  const res = await ai.models.generateContent({ model: MODEL, contents: [{ role: "user", parts: [{ text: prompt }] }] });
+async function generate(prompt, opts) {
+  if (openai) {
+    const res = await openai.images.generate({
+      model: OPENAI_MODEL,
+      prompt,
+      size: "1024x1024",
+      quality: "medium",
+      background: opts.cutout ? "transparent" : "opaque",
+      output_format: "png",
+    });
+    return Buffer.from(res.data[0].b64_json, "base64");
+  }
+  const res = await gemini.models.generateContent({ model: GEMINI_MODEL, contents: [{ role: "user", parts: [{ text: prompt }] }] });
   const part = res.candidates?.[0]?.content?.parts?.find((p) => p.inlineData?.data);
   if (!part) throw new Error("no image returned");
   return Buffer.from(part.inlineData.data, "base64");
 }
 
+/** Runs `fn` over `items`, a few at a time, to stay inside image rate limits. */
+async function pool(items, size, fn) {
+  const queue = [...items];
+  await Promise.all(Array.from({ length: size }, async () => {
+    while (queue.length) await fn(queue.shift());
+  }));
+}
+
 for (const [group, items] of Object.entries(ART)) {
   if (groups.length && !groups.includes(group)) continue;
-  await Promise.all(
-    items.map(async ([out, prompt, opts]) => {
+  await pool(items, 4, async ([out, prompt, opts]) => {
       if (existsSync(out) && !force) return;
       await mkdir(dirname(out), { recursive: true });
       for (let attempt = 1; attempt <= 3; attempt++) {
         try {
-          let img = await generate(prompt);
-          if (opts.cutout) img = await cutout(img);
+          let img = await generate(prompt, opts);
+          if (opts.cutout && !(await isCutOut(img))) img = await cutout(img);
           const s = sharp(img).resize(opts.size, opts.size, { fit: "cover" });
           await writeFile(out, out.endsWith(".png") ? await s.png().toBuffer() : await s.jpeg({ quality: 86 }).toBuffer());
           console.log("✓", out);
@@ -101,8 +132,7 @@ for (const [group, items] of Object.entries(ART)) {
         }
       }
       console.error("✗", out);
-    }),
-  );
+  });
 }
 
 // The app only shows art that exists (lib/art.ts).

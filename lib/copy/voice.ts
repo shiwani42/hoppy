@@ -6,11 +6,11 @@
 export const pick = <T,>(xs: readonly T[], seed = Math.random()) => xs[Math.floor(seed * xs.length) % xs.length];
 
 export const MEAL_REPLIES = {
-  protein: ["Protein power! My muscles say shukriya 💪", "That's muscle fuel. Shabaash!", "Ooh, strong choice. I can feel it already."],
-  fiber: ["Fibre-rich! My tummy is doing a happy dance.", "Digestion says thank you, ji 🌾", "Sabzi for the win. Gut feeling: great."],
-  light: ["Light and lovely. Nicely done.", "Simple ghar ka khana — the best kind.", "Balanced plate, happy me."],
-  treat: ["A treat is part of the journey. Enjoy it! 😊", "Plot twist accepted. We're still on track.", "Life needs a little mithas. All good."],
-  default: ["Logged! Thanks for feeding me well.", "Got it — that's in the book.", "Yum. Noted with love."],
+  protein: ["Protein power! Good for your muscles 💪", "That's solid muscle fuel. Shabaash!", "Strong choice — protein well covered."],
+  fiber: ["Fibre-rich — great for digestion 🌾", "Good fibre there, ji 🌾", "Sabzi for the win. Your gut will thank you."],
+  light: ["Light and balanced. Nicely done.", "Simple ghar ka khana — the best kind.", "A balanced plate. Well done."],
+  treat: ["A treat is part of the journey. Enjoy it! 😊", "All good — one treat doesn't change the week.", "Life needs a little mithas. All good."],
+  default: ["Logged! Thanks for keeping track.", "Got it — that's in today's log.", "Noted. Shabaash for logging!"],
 } as const;
 
 export const NOT_FOOD = "That doesn't look like food 👀 Try again, or tell me what you ate.";

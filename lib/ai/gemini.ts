@@ -2,8 +2,6 @@ import "server-only";
 import { GoogleGenAI } from "@google/genai";
 import { hasKey, models } from "./config";
 import { z } from "zod";
-import { STYLE_REF_JPEG } from "@/lib/avatar/style-ref";
-import { avatarPrompt, posePrompt, type Pose } from "./prompts";
 import { AiMeal, type AiMealT } from "./schemas";
 
 let client: GoogleGenAI | null = null;
@@ -12,26 +10,15 @@ function gemini() {
   return client;
 }
 
-/**
- * Generates one twin image from the selfie, in the reference style: a body stage
- * (1–5) or a pose. Returns null when no key is configured, so the caller can fall
- * back to the placeholder avatar.
- */
-export async function generateAvatarImage(
-  selfie: { bytes: Buffer; mimeType: string },
-  what: number | Pose,
-): Promise<{ bytes: Buffer; mimeType: string } | null> {
+/** Backup twin generator: same references and prompt as OpenAI (lib/ai/prompts.ts > twinPrompt). */
+export async function generateTwinGemini(refs: { bytes: Buffer; mimeType: string }[], prompt: string): Promise<{ bytes: Buffer; mimeType: string } | null> {
   if (!hasKey.gemini()) return null;
   const res = await gemini().models.generateContent({
     model: models.avatar,
     contents: [
       {
         role: "user",
-        parts: [
-          { inlineData: { mimeType: selfie.mimeType, data: selfie.bytes.toString("base64") } },
-          { inlineData: { mimeType: "image/jpeg", data: STYLE_REF_JPEG } },
-          { text: typeof what === "number" ? avatarPrompt(what) : posePrompt(what) },
-        ],
+        parts: [...refs.map((r) => ({ inlineData: { mimeType: r.mimeType, data: r.bytes.toString("base64") } })), { text: prompt }],
       },
     ],
   });

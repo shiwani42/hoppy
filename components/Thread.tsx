@@ -134,7 +134,7 @@ export function ActivityEntry({ a, onDelete }: { a: SavedActivity; onDelete?: ()
         sub={<>burned · +{Math.round(Number(a.active_minutes))} min Strength</>}
         actions={onDelete && <button onClick={onDelete} className="rounded-full px-2.5 py-1.5 text-ink-faint">Remove</button>}
       >
-        Badhiya! Your muscles say thank you.
+        Badhiya! Added to today&apos;s movement.
       </ReplyCard>
     </>
   );

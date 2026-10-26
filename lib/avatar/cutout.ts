@@ -81,3 +81,11 @@ export async function cutout(input: Buffer, tolerance = 34): Promise<Buffer> {
 
   return sharp(data, { raw: { width: w, height: h, channels: 4 } }).png().toBuffer();
 }
+
+/** True when the image already has a transparent background (all four corners clear). */
+export async function isCutOut(input: Buffer): Promise<boolean> {
+  const { data, info } = await sharp(input).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const { width: w, height: h } = info;
+  const alpha = (x: number, y: number) => data[(y * w + x) * 4 + 3];
+  return [alpha(0, 0), alpha(w - 1, 0), alpha(0, h - 1), alpha(w - 1, h - 1)].every((a) => a < 16);
+}

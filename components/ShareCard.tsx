@@ -57,7 +57,7 @@ export const ShareCard = forwardRef<HTMLDivElement, { d: ShareCardData }>(functi
 
         <div className="mt-auto flex w-full items-center justify-between text-[10px] text-ink-soft">
           <span className="font-display text-[14px] font-extrabold tracking-wide text-teal">HOPPY</span>
-          <span>{d.date} · my twin, my journey</span>
+          <span>{d.date}</span>
         </div>
       </div>
     </div>
