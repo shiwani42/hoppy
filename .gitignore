@@ -36,7 +36,3 @@ next-env.d.ts
 /supabase/.branches
 /supabase/.temp
 
-# service worker build output
-/public/sw.js
-/public/sw.js.map
-/public/swe-worker*

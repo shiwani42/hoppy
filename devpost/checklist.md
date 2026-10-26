@@ -9,7 +9,7 @@ Build mode: fast (learner asked to finish everything end to end locally before t
 
 ## Slices
 
-- [ ] **1. Take a selfie and meet your avatar**
+- [x] **1. Take a selfie and meet your avatar**
   Becomes usable: Opening the app shows the selfie screen. Taking or picking a selfie plays the "becoming you" wait, then your stylized 3D avatar (stage 1) appears on the home screen with "Hi, [name]". You're signed in anonymously and the avatar survives a reload.
   Why now: The avatar is the kernel and the riskiest AI call (does Gemini keep your likeness, in our art style?). Bootstrapping (Next.js, Tailwind theme and fonts, Supabase auth and storage) lands here so the first thing we build is the first thing you see.
   PRD ref: `prd.md > The Core Journey` (steps 1–2), `prd.md > Onboarding (Drip)`, `prd.md > The Avatar and Body Stages`, `prd.md > Look and Feel`
@@ -186,3 +186,6 @@ Activity mode:
 - Built fully local without cloud accounts or AI keys (learner request: "just do everything locally for now; I will do these setups later"). Supabase runs locally through the Supabase CLI on Docker, the same code as the cloud project. Each AI provider sits behind an adapter that falls back to clearly labeled mock responses when its key is missing, so every flow is usable end to end. Real-AI quality checks (likeness, Indian-food accuracy, Hinglish voice) run once keys are added.
 - Slice 2 changed from a Vercel deploy to a local installable PWA. A live URL needs GitHub and Vercel accounts and is deferred to when they exist (steps go in the README).
 - Hands-on checkpoints deferred: the learner asked to finish all slices end to end before trying the app. Checkpoint boxes stay unchecked until they try it.
+- API routes read the user's Supabase access token from an `Authorization: Bearer` header instead of `@supabase/ssr` cookies plus `middleware.ts`. Next 16 renamed middleware to `proxy`, and all data access is client-side under row level security, so a cookie session added nothing. This is internal; the behavior is the same.
+- Hand-written `public/sw.js` instead of Serwist: `@serwist/next` hooks into webpack, but Next 16 builds with Turbopack. One small file covers the offline shell and push.
+- Nutrition targets verified: protein is 0.83 g/kg/day (ICMR-NIN RDA 2020 brief note), rising to 1 g/kg for cereal-based diets per the same document's footnote, so it's applied to veg/Jain/vegan users. Fibre is 40 g per 2,000 kcal (ICMR-NIN 2020 as reported), replacing the spec's 30 g estimate. `lib/rules/targets.ts` cites both.

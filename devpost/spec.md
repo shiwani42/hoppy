@@ -40,8 +40,8 @@ PRD ref: `prd.md > The Core Journey`.
 |---|---|---|---|
 | Framework | Next.js (App Router) + React + TypeScript | next 16.4.x, react 19.3.x | https://nextjs.org/docs |
 | Styling | Tailwind CSS | 4.3.x | https://tailwindcss.com/docs |
-| PWA (offline shell, install) | Serwist | @serwist/next 9.5.x | https://serwist.pages.dev |
-| DB / Auth / Storage / Cron | Supabase | supabase-js 2.118.x, @supabase/ssr 0.12.x | https://supabase.com/docs |
+| PWA (offline shell, install, push) | Next.js `app/manifest.ts` + hand-written `public/sw.js` | — | https://nextjs.org/docs/app/guides/progressive-web-apps |
+| DB / Auth / Storage / Cron | Supabase (local via Supabase CLI + Docker) | supabase-js 2.118.x | https://supabase.com/docs |
 | OpenAI + GLM client | `openai` SDK (GLM is OpenAI-compatible via `baseURL`) | 7.43.x | https://platform.openai.com/docs · https://docs.z.ai |
 | Gemini | `@google/genai` | 2.31.x | https://ai.google.dev/gemini-api/docs |
 | Web push | `web-push` (VAPID, free) | 3.6.x | https://github.com/web-push-libs/web-push |
@@ -85,7 +85,7 @@ Implements `prd.md > Look and Feel` (no re-interview).
 ## Components
 
 ### Auth and Session
-Supabase anonymous sign-in on first load (`lib/supabase/client.ts`, `middleware.ts` refreshes the session). An optional "Save my progress with Google" option links the anonymous account. It's offered when the user joins Community or opens settings.
+Supabase anonymous sign-in on first load (`lib/supabase/client.ts`; the session lives in localStorage). API routes act as the user via the `Authorization: Bearer` access token (`lib/supabase/server.ts`). An optional "Save my progress with Google" option links the anonymous account. It's offered when the user joins Community or opens settings.
 PRD ref: `prd.md > Onboarding (Drip)`, `prd.md > Community`.
 
 ### Onboarding Flow
@@ -254,8 +254,7 @@ hoppy/
 │   ├── migrations/             # tables, RLS, views, pg_cron job
 │   └── seed.sql                # sample specialists (labeled sample)
 ├── tests/rules/                # unit tests for lib/rules
-├── sw.ts                       # Serwist service worker + push handler
-├── middleware.ts               # Supabase session refresh
+├── public/sw.js                # service worker: offline shell + push
 ├── .env.example
 ├── devpost/                    # Devpost learning workspace
 └── README.md
@@ -328,7 +327,7 @@ Prices are approximate and come from third-party trackers, October 2026. Verify 
 - Push-up alarm cut (it was an analogy). Specialists stay one-sided with sample profiles; friends are added by invite link only.
 
 **Agent recommendations (learner to accept with this spec)**
-- Next.js + Tailwind + Serwist
+- Next.js + Tailwind + hand-written service worker
 - Supabase anonymous auth
 - pg_cron for reminders
 - GLM through the OpenAI SDK

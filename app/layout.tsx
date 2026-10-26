@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Baloo_2, Mukta } from "next/font/google";
+import { ServiceWorker } from "@/components/ServiceWorker";
 import "./globals.css";
 
 const baloo = Baloo_2({
@@ -20,6 +21,7 @@ export const metadata: Metadata = {
     "Your meals, workouts, water and sleep power an avatar of you. A supportive calorie tracker for Indian food and yoga.",
   applicationName: "Hoppy",
   appleWebApp: { capable: true, title: "Hoppy", statusBarStyle: "default" },
+  icons: { apple: "/icons/apple-touch-icon.png" },
 };
 
 export const viewport: Viewport = {
@@ -34,6 +36,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="en" className={`${baloo.variable} ${mukta.variable} h-full antialiased`}>
       <body className="min-h-full">
         <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col">{children}</div>
+        <ServiceWorker />
       </body>
     </html>
   );
