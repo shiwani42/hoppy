@@ -14,6 +14,7 @@ export type Profile = {
   current_stage: number;
   selfie_path: string | null;
   skin_tone: string | null;
+  asked: Record<string, string>;
   created_at: string;
 };
 

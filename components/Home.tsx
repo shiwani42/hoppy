@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Avatar } from "@/components/Avatar";
+import { DripQuestion, type DripAnswer } from "@/components/DripQuestion";
+import { StatSheet } from "@/components/StatSheet";
 import { InputBar } from "@/components/InputBar";
 import { MealCard } from "@/components/MealCard";
 import { MealConfirmSheet } from "@/components/MealConfirmSheet";
@@ -11,11 +13,14 @@ import { NOT_FOOD } from "@/lib/copy/voice";
 import { greeting } from "@/lib/greeting";
 import { resizeImage } from "@/lib/image";
 import {
-  deleteMeal, loadMeals, mealTotals, saveMeal, setMealReply, startOfDay, streamMealReply, toEditable, updateMeal,
+  deleteMeal, mealTotals, saveMeal, setMealReply, streamMealReply, toEditable, updateMeal,
   type SavedMeal,
 } from "@/lib/meals/client";
 import { mealTypeFor, type MealAnalysis, type MealItem, type MealType } from "@/lib/meals/types";
-import { loadProfile, type Profile } from "@/lib/profile";
+import { nextQuestion, type DripEvent, type Question } from "@/lib/onboarding/nextQuestion";
+import { loadProfile, saveProfile, type Profile } from "@/lib/profile";
+import { vitality } from "@/lib/rules/stats";
+import { dateKey, loadToday, saveSnapshot, type Today } from "@/lib/stats/today";
 import { api, ensureSession } from "@/lib/supabase/client";
 
 type Draft = {
@@ -34,13 +39,33 @@ export function Home() {
   const router = useRouter();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [avatar, setAvatar] = useState<AvatarStage | null>(null);
-  const [meals, setMeals] = useState<SavedMeal[]>([]);
+  const [today, setToday] = useState<Today | null>(null);
+  const meals = today?.meals ?? [];
+  const [statsOpen, setStatsOpen] = useState(false);
+  const [reacting, setReacting] = useState(false);
+  const [question, setQuestion] = useState<Question | null>(null);
   const [replies, setReplies] = useState<Record<string, string>>({});
   const [draft, setDraft] = useState<Draft | null>(null);
   const [reading, setReading] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
-  const refreshMeals = useCallback(async () => setMeals(await loadMeals(startOfDay())), []);
+  /** Recomputes today's stats from the logs and stores the day's snapshot. */
+  const refresh = useCallback(async (p: Profile) => {
+    const t = await loadToday(p);
+    setToday(t);
+    await saveSnapshot(t, p.weight_kg);
+    return t;
+  }, []);
+
+  const maybeAsk = useCallback((p: Profile, event: DripEvent) => {
+    const q = nextQuestion(p, event);
+    if (q && p.asked?.[q.id] !== dateKey()) setQuestion(q);
+  }, []);
+
+  function react() {
+    setReacting(true);
+    setTimeout(() => setReacting(false), 700);
+  }
 
   useEffect(() => {
     (async () => {
@@ -53,9 +78,10 @@ export function Home() {
       }
       setProfile(p);
       setAvatar(stages[p.current_stage] ?? stages[1]);
-      await refreshMeals();
+      await refresh(p);
+      maybeAsk(p, "app_open");
     })().catch(console.error);
-  }, [router, refreshMeals]);
+  }, [router, refresh, maybeAsk]);
 
   useEffect(() => {
     if (!toast) return;
@@ -99,17 +125,20 @@ export function Home() {
   }
 
   async function confirm(items: MealItem[], type: MealType) {
-    if (!draft) return;
+    if (!draft || !profile) return;
     if (draft.editing) {
       await updateMeal(draft.editing.id, type, items);
       setDraft(null);
-      await refreshMeals();
+      await refresh(profile);
+      react();
       return;
     }
     const meal = await saveMeal({ meal_type: type, source: draft.source, photo_path: draft.photo_path, is_demo: draft.demo, items });
     if (draft.previewUrl) URL.revokeObjectURL(draft.previewUrl);
     setDraft(null);
-    await refreshMeals();
+    await refresh(profile);
+    react();
+    maybeAsk(profile, "meal_logged");
     const reply = await streamMealReply(
       items.map(({ name, quantity, unit }) => ({ name, quantity, unit })),
       mealTotals(meal),
@@ -117,6 +146,17 @@ export function Home() {
       (soFar) => setReplies((r) => ({ ...r, [meal.id]: soFar })),
     );
     if (reply) await setMealReply(meal.id, reply);
+  }
+
+  async function answerQuestion(a: DripAnswer) {
+    if (!profile) return;
+    const { sleep_hours, ...fields } = a;
+    void sleep_hours; // sleep is logged separately (slice 5)
+    const p = await saveProfile(fields);
+    setProfile(p);
+    setQuestion(null);
+    await refresh(p);
+    react();
   }
 
   if (!profile) {
@@ -129,7 +169,15 @@ export function Home() {
         <h1 className="font-display text-3xl font-bold">
           {greeting()}, {profile.name}.
         </h1>
-        <Avatar url={avatar?.url} isPlaceholder={avatar?.is_placeholder} size={meals.length ? 150 : 220} className="mt-4" />
+        <Avatar
+          url={avatar?.url}
+          isPlaceholder={avatar?.is_placeholder}
+          size={meals.length ? 150 : 220}
+          className="mt-4"
+          vitality={today ? vitality(today.stats) : undefined}
+          reacting={reacting}
+          onClick={() => setStatsOpen(true)}
+        />
       </header>
 
       <section className="mt-6 flex flex-col gap-4 pb-4" aria-label="Today">
@@ -146,10 +194,22 @@ export function Home() {
             onEdit={() => setDraft({ key: Date.now(), items: m.meal_items.map(toEditable), type: m.meal_type, source: m.source, editing: m })}
             onDelete={async () => {
               await deleteMeal(m.id);
-              await refreshMeals();
+              await refresh(profile);
             }}
           />
         ))}
+        {question && (
+          <DripQuestion
+            key={question.id}
+            q={question}
+            onAnswer={answerQuestion}
+            onLater={async () => {
+              const p = await saveProfile({ asked: { ...profile.asked, [question.id]: dateKey() } });
+              setProfile(p);
+              setQuestion(null);
+            }}
+          />
+        )}
         {reading && (
           <p className="rounded-3xl bg-card px-5 py-4 text-center font-display text-lg shadow-sm animate-pulse" aria-live="polite">
             Reading your plate…
@@ -163,6 +223,10 @@ export function Home() {
         <div role="status" className="fixed inset-x-5 top-5 z-50 mx-auto max-w-md rounded-2xl bg-ink px-4 py-3 text-center text-cream shadow-lg animate-fade-up">
           {toast}
         </div>
+      )}
+
+      {today && (
+        <StatSheet open={statsOpen} onClose={() => setStatsOpen(false)} stats={today.stats} stage={profile.current_stage} />
       )}
 
       {draft && (

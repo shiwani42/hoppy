@@ -29,7 +29,7 @@ Build mode: fast (learner asked to finish everything end to end locally before t
   Learner check: On your laptop's Chrome, click Install, open Hoppy as an app, and redo the selfie flow. Optionally open the HTTPS LAN URL on your Android.
   Commit: `PWA manifest, service worker, and install`
 
-- [ ] **3. Snap a meal and get your meal card**
+- [x] **3. Snap a meal and get your meal card**
   Becomes usable: Tap the camera, snap (or pick) a meal photo, see the dish split into items, adjust portions and meal type in one tap, and get a card with a big kcal number, protein/fiber/carbs/fat, and a warm streamed one-liner. Non-food photos and unsure dishes are handled; if AI fails, you can search a food list.
   Why now: Meal photo understanding on Indian food is the second big AI risk and the main input the kernel feeds on.
   PRD ref: `prd.md > Meal Logging (Photo and Voice)`, `prd.md > The Core Journey` (steps 3–4), `prd.md > States and Boundaries`
