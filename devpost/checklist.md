@@ -129,7 +129,7 @@ Build mode: fast (learner asked to finish everything end to end locally before t
   Learner check: Set a reminder 2 minutes from now, lock your phone, and confirm the notification arrives and opens logging.
   Commit: `Settings and push reminders`
 
-- [ ] **13. Reports you can show a doctor**
+- [x] **13. Reports you can show a doctor**
   Becomes usable: Pick 7/30/90 days and see trends for each stat, calories in vs. out, weight, and adherence. Tap "Write my summary" for an AI-written overview. Export a clean PDF.
   Why now: Uses all the accumulated data; the last Tier 2 feature.
   PRD ref: `prd.md > Reports`
@@ -198,3 +198,4 @@ Activity mode:
 - Product refinements found while verifying: (1) food suggestions are ranked by protein or fibre **per calorie** and are vegetarian until the diet is known, after an early version suggested chole bhature and mutton curry; (2) on the signup day, nudges wait for the first log; (3) concurrent refreshes can't double-save a nudge.
 - Push verification: the sending side (VAPID signing, aes128gcm encryption, 201 accepted, 410 → subscription removed, one send per reminder per day, skip logged meals and taken doses) was verified against a local HTTPS mock push service. The real `pg_cron` → `pg_net` → `/api/cron/reminders` loop was observed running every 5 minutes. Headless Chrome cannot register with a real browser push service (it hangs, and is unsupported in incognito), so **receiving a notification on a real device is the learner check**.
 - Turning on reminders now always creates the meal reminders, and a push-service failure shows its own honest message. Previously a failed subscribe was reported as "blocked" and left nothing for the in-app fallback to remind about.
+- Community privacy is enforced in the database: friendships are created only by the `accept_invite` function (always mutual), friends read only shared cards (rows plus images) and the weekly strong-day count via `weekly_leaderboard`, and strangers see nothing. "Weekly" means the last 7 days (rolling), so the board never resets to zero on Mondays. Google linking is wired (`linkIdentity`, manual linking enabled locally) but needs a Google OAuth client in Supabase; until then the button explains that kindly.

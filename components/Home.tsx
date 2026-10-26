@@ -18,6 +18,7 @@ import { QuickLog } from "@/components/QuickLog";
 import { Tumbler } from "@/components/Tumbler";
 import { loadAvatarStages, type AvatarStage } from "@/lib/avatar/client";
 import { askHoppy, loadChat, saveNudge, type ChatMsg } from "@/lib/chat/client";
+import { acceptInvite, PENDING_INVITE } from "@/lib/community/client";
 import { MEAL_REMINDERS, NOT_FOOD, NUDGES, nudgeKeyOf, pick } from "@/lib/copy/voice";
 import { hasPushSubscription } from "@/lib/push/client";
 import { loadReminders, missedMeal } from "@/lib/reminders/client";
@@ -207,6 +208,17 @@ export function Home() {
       const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
       if (tz && p.timezone !== tz) setProfile(await saveProfile({ timezone: tz }));
       await showReminder(t);
+      // An invite link opened before onboarding is accepted now (prd.md > Community).
+      let invite: string | null = null;
+      try {
+        invite = localStorage.getItem(PENDING_INVITE);
+        if (invite) localStorage.removeItem(PENDING_INVITE);
+      } catch {}
+      if (invite) {
+        acceptInvite(invite)
+          .then((name) => setToast(`You and ${name ?? "your friend"} are now Hoppy friends 🤝`))
+          .catch((err: Error) => setToast(err.message));
+      }
       fetch("/api/capabilities").then((r) => r.json()).then((c) => setServerVoice(!!c.gemini)).catch(() => {});
     })().catch(console.error);
   }, [router, refresh, maybeAsk, checkStage]);
