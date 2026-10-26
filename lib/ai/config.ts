@@ -11,12 +11,13 @@ export const models = {
   mealVision: process.env.OPENAI_VISION_MODEL ?? "gpt-6.1-sol",
   voice: process.env.GEMINI_FLASH_MODEL ?? "gemini-3.8-flash",
   /**
-   * The twin: OpenAI images first, Gemini image as backup. gpt-image-2.5-sunburst is
-   * OpenAI's pick when edit precision matters (a selfie turned into a likeness);
+   * The twin: OpenAI images first, Gemini image as backup. Side by side on the same
+   * selfie (2026-10-27), gpt-image-2.5-flare gave a properly stylised 3D twin that
+   * keeps the likeness in ~23 s; sunburst stayed half-photographic and took ~39 s.
    * gpt-image-1.x retire on 2026-12-01. Pricing (Oct 2026, 1024², before input
    * images): low ≈ $0.006, medium ≈ $0.013, high ≈ $0.04–0.05, max ≈ $0.21.
    */
-  twinImage: process.env.OPENAI_IMAGE_MODEL ?? "gpt-image-2.5-sunburst",
+  twinImage: process.env.OPENAI_IMAGE_MODEL ?? "gpt-image-2.5-flare",
   /** The portrait carries the likeness and is made once: high. Poses and stages copy it: medium. */
   twinPortraitQuality: (process.env.OPENAI_PORTRAIT_QUALITY ?? "high") as ImageQuality,
   twinQuality: (process.env.OPENAI_IMAGE_QUALITY ?? "medium") as ImageQuality,

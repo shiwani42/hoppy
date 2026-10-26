@@ -43,7 +43,7 @@ const PHOTO =
 /** [file, prompt, options] — options.cutout makes the white background transparent. */
 const ART = {
   // One sticker per dish in the food list, named by food id.
-  food: FOODS.map((f) => [`public/art/food/${f.id}.png`, STICKER + f.name.toLowerCase(), { cutout: true, size: 384 }]),
+  food: FOODS.map((f) => [`public/art/food/${f.id}.webp`, STICKER + f.name.toLowerCase(), { cutout: true, size: 256 }]),
 
   experts: [
     ["dr-ananya-rao", "Indian woman in her early 40s, clinical dietitian in a white coat with a stethoscope, hair tied back"],
@@ -125,8 +125,8 @@ for (const [group, items] of Object.entries(ART)) {
         try {
           let img = await generate(prompt, opts);
           if (opts.cutout && !(await isCutOut(img))) img = await cutout(img);
-          const s = sharp(img).resize(opts.size, opts.size, { fit: "cover" });
-          await writeFile(out, out.endsWith(".png") ? await s.png().toBuffer() : await s.jpeg({ quality: 86 }).toBuffer());
+          const s = sharp(img).resize(opts.size, opts.size, opts.cutout ? { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } } : { fit: "cover" });
+          await writeFile(out, out.endsWith(".webp") ? await s.webp({ quality: 84, alphaQuality: 90 }).toBuffer() : out.endsWith(".png") ? await s.png().toBuffer() : await s.jpeg({ quality: 86 }).toBuffer());
           console.log("✓", out);
           return;
         } catch (err) {

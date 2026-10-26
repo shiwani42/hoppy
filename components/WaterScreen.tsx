@@ -184,7 +184,7 @@ export function WaterScreen() {
             <svg aria-hidden width="20" height="16" viewBox="0 0 20 16" className="absolute -bottom-3 left-[58%]"><path d="M0 0 C6 4 10 10 6 16 C12 10 16 4 20 0 Z" fill="#fff" /></svg>
           </Bubble>
         </div>
-        <TwinArt twin={twin} pose="drink" stage={me.current_stage} className="absolute right-[-14px] bottom-[-4px] h-[200px] w-[176px] [mask-image:linear-gradient(to_bottom,black_78%,transparent)]" />
+        <TwinArt twin={twin} pose="drink" stage={me.current_stage} className="absolute right-[-14px] bottom-[-4px] h-[200px] w-[176px] [mask-image:radial-gradient(ellipse_70%_80%_at_62%_42%,black_62%,transparent_100%)]" />
         <div className="absolute bottom-8 left-1">
           <p className="font-display text-[24px] leading-tight font-extrabold">{glasses} glass peeya aaj</p>
           <p className="text-[14px] text-ink-soft">({glasses} glass{glasses === 1 ? "" : "es"} today)</p>

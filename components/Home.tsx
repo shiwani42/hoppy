@@ -79,6 +79,7 @@ export function Home() {
   const [burst, setBurst] = useState(0);
   const [camMenu, setCamMenu] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const [selfieUrl, setSelfieUrl] = useState<string | null>(null);
 
   const nudging = useRef(false);
   const camera = useRef<HTMLInputElement>(null);
@@ -190,16 +191,29 @@ export function Home() {
       await ensureSession();
       const p = await loadProfile();
       const tw = await loadTwin();
-      if (!p?.name || (!tw.stages[1] && !tw.poses.bust)) {
+      if (!p?.name || !p.selfie_path) {
         router.replace("/onboarding");
         return;
       }
       setProfile(p);
       setTwin(tw);
+      // Right after onboarding the twin is still being made in the background: show the
+      // selfie meanwhile, check every few seconds, and celebrate when it arrives.
+      if (!tw.poses.bust && !tw.stages[1]) {
+        const { data } = await supabase().storage.from("selfies").createSignedUrl(p.selfie_path, 3600);
+        setSelfieUrl(data?.signedUrl ?? null);
+        let tries = 0;
+        const poll = setInterval(async () => {
+          const fresh = await loadTwin(true);
+          if (fresh.poses.bust || fresh.stages[1] || ++tries > 40) {
+            clearInterval(poll);
+            setTwin(fresh);
+            if (fresh.poses.bust || fresh.stages[1]) setBurst(Date.now());
+          }
+        }, 5000);
+      } else if (!tw.stages[1]) setTimeout(async () => setTwin(await loadTwin(true)), 30000);
       const t = await refresh(p);
       await checkStage(p);
-      // Body stage 1 may still be rendering in the background right after onboarding.
-      if (!tw.stages[1]) setTimeout(async () => setTwin(await loadTwin(true)), 30000);
       if (!maybeAsk(p, "app_open")) maybeAsk(p, "morning", t);
       const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
       if (tz && p.timezone !== tz) setProfile(await saveProfile({ timezone: tz }));
@@ -413,17 +427,7 @@ export function Home() {
     ? { text: <span className="animate-pulse">Reading your plate…</span> }
     : lastMeal && replies[lastMeal.id]
       ? { text: replies[lastMeal.id] }
-      : question
-        ? {
-            text: ASK[question.id].short,
-            onClick: () => setAsking(true),
-            action: (
-              <button onClick={(e) => { e.stopPropagation(); skipQuestion(); }} className="font-normal text-ink-soft">
-                (Skip)
-              </button>
-            ),
-          }
-        : openReminder
+      : openReminder
           ? { text: MEAL_REMINDERS[openReminder], testid: "reminder", action: <button onClick={dismissReminder} className="font-normal text-ink-soft">(Dismiss)</button> }
           : snoozed[0]
             ? { text: snoozed[0].body, onClick: () => router.push(snoozed[0].url), action: <span className="font-normal text-teal">(Open)</span> }
@@ -463,9 +467,21 @@ export function Home() {
       <section className="relative z-0 mt-1 h-[236px] shrink-0" aria-label="Your twin">
         <div aria-hidden className="absolute top-8 left-1/2 h-[220px] w-[220px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle_at_50%_45%,rgb(247_226_195/0.9),rgb(247_226_195/0)_70%)]" />
         <Confetti burst={burst} still={!burst} count={burst ? 30 : 18} spread={burst ? 170 : 150} />
-        <Link href="/today" aria-label="See today's stats" className={`absolute left-1/2 top-0 block -translate-x-1/2 ${burst ? "animate-pop" : ""}`} key={burst}>
-          <TwinArt twin={twin} pose="bust" stage={stage} className="h-[236px] w-[224px]" float />
-        </Link>
+        {twin && !twin.poses.bust && !twin.stages[1] ? (
+          <div className="absolute top-1 left-1/2 flex -translate-x-1/2 flex-col items-center" aria-live="polite">
+            <div className="relative h-40 w-40">
+              <div className="absolute inset-0 animate-spin rounded-full [animation-duration:2.4s] [background:conic-gradient(from_0deg,#10686a,#e2b04a,#10686a00_70%)]" />
+              <div className="absolute inset-[6px] rounded-full bg-cream" />
+              {/* eslint-disable-next-line @next/next/no-img-element -- signed Storage URL */}
+              {selfieUrl && <img src={selfieUrl} alt="" className="absolute inset-3 h-[136px] w-[136px] rounded-full object-cover" />}
+            </div>
+            <p className="mt-1.5 rounded-full bg-card px-3 py-1 font-display text-[15px] font-bold shadow-card">Making your 3D twin…</p>
+          </div>
+        ) : (
+          <Link href="/today" aria-label="See today's stats" className={`absolute left-1/2 top-0 block -translate-x-1/2 ${burst ? "animate-pop" : ""}`} key={burst}>
+            <TwinArt twin={twin} pose="bust" stage={stage} className="h-[236px] w-[224px]" float />
+          </Link>
+        )}
         {streakDays > 0 && (
           <Link href={`/share/milestone?type=streak&value=${streakDays}&celebrate=1`} className="absolute top-[112px] left-4 flex flex-col items-center rounded-[18px] bg-card px-3 py-2 shadow-card" data-testid="streak">
             <span className="text-[22px] leading-none" aria-hidden>🔥</span>
@@ -493,6 +509,20 @@ export function Home() {
           >
             <svg aria-hidden width="24" height="14" viewBox="0 0 24 14" className="absolute -top-3 left-1/2 -translate-x-1/2"><path d="M0 14 C8 10 10 4 12 0 C14 4 16 10 24 14 Z" fill="#fff" /></svg>
             <p className="font-display text-[17px] leading-snug font-semibold">{line.text} {line.action}</p>
+          </div>
+        )}
+
+        {question && (
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={() => setAsking(true)}
+            onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && setAsking(true)}
+            aria-label="A question from your twin"
+            className="-mt-2 mx-auto flex max-w-[340px] cursor-pointer items-center gap-2 rounded-full bg-sand px-4 py-2 font-display text-[15px] font-bold animate-fade-up active:scale-[.99]"
+          >
+            <span>{ASK[question.id].short}</span>
+            <button onClick={(e) => { e.stopPropagation(); skipQuestion(); }} className="shrink-0 font-normal text-ink-soft">Skip</button>
           </div>
         )}
 
@@ -560,7 +590,13 @@ export function Home() {
               })}
               {today?.activities.map((a) => (
                 <Link key={a.id} href="/move" className="flex w-[86px] shrink-0 flex-col items-center text-center">
-                  <span className="flex h-[76px] w-[76px] items-center justify-center rounded-full border-[4px] border-white bg-strength-soft text-[38px] shadow-[0_6px_14px_rgb(60_40_10/0.14)]" aria-hidden>{activityByKey(a.activity_key)?.emoji ?? "🏃"}</span>
+                  <span className="relative flex h-[76px] w-[76px] items-end justify-center overflow-hidden rounded-full border-[4px] border-white bg-strength-soft shadow-[0_6px_14px_rgb(60_40_10/0.14)]" aria-hidden>
+                    {twin?.poses.walk || twin?.poses.stretch ? (
+                      <TwinArt twin={twin} pose={/yoga|surya|stretch|pranayama/.test(a.activity_key) ? "stretch" : "walk"} stage={stage} className="h-[64px] w-[64px]" />
+                    ) : (
+                      <span className="mb-3 text-[34px]">{activityByKey(a.activity_key)?.emoji ?? "🏃"}</span>
+                    )}
+                  </span>
                   <span className="mt-1.5 line-clamp-1 font-display text-[15px] leading-tight font-bold">{a.label.split(" (")[0]}</span>
                   <span className="text-[13px] text-ink-soft">{Number(a.minutes)} min</span>
                 </Link>

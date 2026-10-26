@@ -17,7 +17,7 @@ const have = new Set<string>(manifest.food);
 
 export function foodArt(foodId: string | null | undefined): string | null {
   if (!foodId) return null;
-  if (have.has(foodId)) return `/art/food/${foodId}.png`;
+  if (have.has(foodId)) return `/art/food/${foodId}.webp`;
   const b = BORROW[foodId];
   return b && manifest.stickers.includes(b) ? `/art/stickers/${b}.png` : null;
 }

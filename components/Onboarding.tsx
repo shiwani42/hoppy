@@ -4,15 +4,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Confetti, TwinArt, loadTwin, type Twin } from "@/components/art";
 import { Button, Screen } from "@/components/ui";
 import { resizeImage, sampleSkinTone } from "@/lib/image";
 import { saveProfile } from "@/lib/profile";
 import { apiJson, ensureSession, supabase } from "@/lib/supabase/client";
 
-type Step = "intro" | "preview" | "making" | "reveal";
-
-const MAKING_STEPS = ["Reading your photo", "Shaping your 3D twin", "Adding the finishing touches"];
+type Step = "intro" | "preview" | "making" | "name";
 
 /** A selfie face guide: viewfinder corners and a dashed head-and-shoulders outline. */
 function FaceGuide() {
@@ -28,14 +25,12 @@ function FaceGuide() {
   );
 }
 
-/** prd.md > Onboarding (Drip): a selfie only, then the twin, then a name. Everything else comes later. */
+/** prd.md > Onboarding (Drip): a selfie and a name, then straight in — the twin is made in the background. */
 export function Onboarding() {
   const router = useRouter();
   const [step, setStep] = useState<Step>("intro");
   const [photo, setPhoto] = useState<Blob | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
-  const [twin, setTwin] = useState<Twin | null>(null);
-  const [done, setDone] = useState(0);
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const cameraInput = useRef<HTMLInputElement>(null);
@@ -44,13 +39,6 @@ export function Onboarding() {
   useEffect(() => {
     ensureSession().catch(() => setError("Couldn't connect. Check your internet and try again."));
   }, []);
-
-  // The steps tick along while the image is made (about half a minute).
-  useEffect(() => {
-    if (step !== "making") return;
-    const t = setInterval(() => setDone((d) => Math.min(MAKING_STEPS.length - 1, d + 1)), 7000);
-    return () => clearInterval(t);
-  }, [step]);
 
   useEffect(() => () => void (preview && URL.revokeObjectURL(preview)), [preview]);
 
@@ -64,7 +52,6 @@ export function Onboarding() {
 
   async function makeTwin() {
     if (!photo) return;
-    setDone(0);
     setStep("making");
     setError(null);
     try {
@@ -74,16 +61,10 @@ export function Onboarding() {
       const up = await supabase().storage.from("selfies").upload(selfie_path, small, { contentType: "image/jpeg" });
       if (up.error) throw up.error;
       await saveProfile({ selfie_path, skin_tone });
-      // The portrait comes first; every later image is drawn to match it.
-      await apiJson("/api/avatar", { poses: ["bust"] });
-      let tw = await loadTwin(true);
-      // No image model set up: the labeled placeholder (body stage 1) stands in.
-      if (!tw.poses.bust) {
-        await apiJson("/api/avatar", { stages: [1] });
-        tw = await loadTwin(true);
-      }
-      setTwin(tw);
-      setStep("reveal");
+      // The twin is made in the background (about half a minute): the portrait first,
+      // then body stage 1 drawn to match it. Nobody waits — Home shows it arriving.
+      await apiJson("/api/avatar", { poses: ["bust"], stages: [1], background: true });
+      setStep("name");
     } catch (err) {
       console.error(err);
       setError("That didn't work. Try the photo again?");
@@ -95,9 +76,6 @@ export function Onboarding() {
     e.preventDefault();
     if (!name.trim()) return;
     await saveProfile({ name: name.trim() });
-    // Body stage 1 renders in the background, matched to the portrait. Every other pose and
-    // stage is made the first time a screen shows it (components/art.tsx > ensureTwinArt).
-    if (!twin?.stages[1]) apiJson("/api/avatar", { stages: [1] }).catch(() => {});
     router.replace("/");
   }
 
@@ -138,41 +116,28 @@ export function Onboarding() {
 
       {step === "making" && (
         <section className="flex flex-1 flex-col items-center justify-center" aria-live="polite">
-          <div className="relative h-56 w-56">
-            <div className="absolute inset-0 animate-spin rounded-full [animation-duration:1.6s] [background:conic-gradient(from_0deg,#10686a,#e2b04a,#10686a00_70%)]" />
-            <div className="absolute inset-[7px] rounded-full bg-cream" />
-            {preview && <img src={preview} alt="" className="absolute inset-4 h-48 w-48 rounded-full object-cover opacity-85" />}
-          </div>
-          <p className="mt-8 font-display text-[24px] font-bold">Creating your twin…</p>
-          <ol className="mt-3 flex flex-col items-start gap-1 text-[16px]">
-            {MAKING_STEPS.map((t, i) => (
-              <li key={t} className={`flex items-center gap-2 transition-colors ${i < done ? "text-teal" : i === done ? "text-ink" : "text-ink-faint"}`}>
-                <span aria-hidden className="w-4">{i < done ? "✓" : "•"}</span> {t}
-              </li>
-            ))}
-          </ol>
-          <p className="mt-4 text-[13px] text-ink-soft">This takes about half a minute.</p>
+          {preview && <img src={preview} alt="" className="h-40 w-40 rounded-full object-cover opacity-80" />}
+          <p className="mt-6 font-display text-[22px] font-bold">Saving your photo…</p>
         </section>
       )}
 
-      {step === "reveal" && (
-        <section className="flex w-full flex-1 flex-col items-center">
-          <div className="relative mt-6 h-[260px] w-[260px] animate-pop">
-            <Confetti burst={1} count={30} spread={190} />
-            <div className="absolute inset-4 rounded-full bg-[radial-gradient(circle_at_50%_40%,#fbe7c4,#f3cf95)]" />
-            <TwinArt twin={twin} pose="bust" stage={1} className="absolute inset-x-6 bottom-0 h-[260px] w-[210px]" />
+      {step === "name" && (
+        <section className="flex w-full flex-1 flex-col items-center animate-fade-up">
+          <div className="relative mt-8 h-44 w-44">
+            <div className="absolute inset-0 animate-spin rounded-full [animation-duration:2.4s] [background:conic-gradient(from_0deg,#10686a,#e2b04a,#10686a00_70%)]" />
+            <div className="absolute inset-[6px] rounded-full bg-cream" />
+            {preview && <img src={preview} alt="" className="absolute inset-3 h-[152px] w-[152px] rounded-full object-cover" />}
           </div>
-          {!twin?.poses.bust && (
-            <p className="mt-2 rounded-full bg-card px-3 py-1 text-[12px] text-ink-soft shadow-card">Placeholder · your 3D twin appears once image generation is set up</p>
-          )}
-          <h1 className="mt-5 font-display text-[32px] font-extrabold animate-fade-up">Your twin is ready</h1>
-          <form onSubmit={finish} className="mt-5 flex w-full flex-col gap-3 animate-fade-up">
-            <label htmlFor="name" className="font-display text-[18px] font-semibold text-ink-soft">What&apos;s your name?</label>
+          <p className="mt-4 text-[15px] text-ink-soft">Your 3D twin is being made — it&apos;ll appear on your home screen.</p>
+          <h1 className="mt-6 font-display text-[32px] font-extrabold">What&apos;s your name?</h1>
+          <form onSubmit={finish} className="mt-5 flex w-full flex-col gap-3">
             <input
               id="name"
+              aria-label="Your name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               autoComplete="given-name"
+              autoFocus
               maxLength={40}
               placeholder="Your name"
               className="h-14 rounded-[16px] border border-[#e6dcc9] bg-card px-5 text-center text-[19px] outline-none focus:border-teal"

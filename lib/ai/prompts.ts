@@ -1,32 +1,28 @@
 /**
  * The twin's look, shared by every image (OpenAI images first, Gemini as backup).
- * Each request sends two images: 1) the selfie — the only source of identity;
- * 2) for the first portrait, the style reference (lib/avatar/style-ref.ts, cropped
- * from the learner's mockups — style only); for every later pose and stage, the
- * user's own portrait instead, so they stay the same character. Different faces,
- * one consistent style.
+ * Each request sends two images, the 3D one FIRST so the model edits a render, not
+ * the photo (with the selfie first it tends to just retouch the photo):
+ * 1) a 3D reference — the style reference (lib/avatar/style-ref.ts, cropped from the
+ *    learner's mockups) for the first portrait, then the user's own portrait;
+ * 2) the selfie — the only source of identity.
  */
 export function twinPrompt(composition: string, opts: { ownTwin: boolean }) {
-  return `Create one image of this person's personal 3D "twin" for a friendly Indian health app.
+  return `Image 1 is a 3D animated-film character render (Pixar-like). Image 2 is a selfie photo of a real person.
 
-INPUT IMAGES
-- Image 1 is a selfie of the user. It is the ONLY source of who this person is.
+Re-render image 1 so the 3D character becomes the person from image 2, keeping image 1's exact rendering style: soft 3D animated look, smooth matte clay-like skin with a warm blush, slightly enlarged warm expressive eyes with catchlights, hair sculpted in soft smooth clumps with gentle highlights, soft warm studio lighting. The result must look like a frame from an animated feature film — never like a photograph, never a retouched or filtered selfie.
 ${
     opts.ownTwin
-      ? "- Image 2 is this user's existing 3D twin, already in the right style. Draw the SAME character: identical face, hair, skin tone, proportions and rendering — only the pose, framing and clothes change."
-      : "- Image 2 is a style reference. Copy its rendering style exactly, but NOTHING about the person in it: not their face, age, gender, skin tone, hair, beard or clothes."
+      ? "\nImage 1 is already this person's own twin: keep that exact character — same face, hair, skin tone, proportions and rendering — and change only the pose, framing and clothes as described below.\n"
+      : ""
+  }
+Take the person's identity from image 2 only: face shape and jawline, nose, eyes, eyebrows, lips, skin tone (never lighten or darken it), hairline, hairstyle and hair colour (including grey or balding), facial hair or clean-shaven, glasses if worn, and anything worn on the head or face (bindi, tilak, turban, hijab, earrings, nose pin). Keep their real apparent age and gender; keep wrinkles, laugh lines and grey hair, rendered gently.${
+    opts.ownTwin ? "" : " Do not keep anything of the original character's face, hair, beard, age or clothes from image 1."
   }
 
-IDENTITY — keep from image 1, so anyone who knows them recognises them instantly:
-face shape and jawline, nose, eye shape and spacing, eyebrows, lips, skin tone (never lighten or darken it), hairline, hairstyle and hair colour (including grey or balding), facial hair or clean-shaven, glasses if worn, and anything they wear on the head or face (bindi, tilak, turban, hijab, earrings, nose pin). Keep their real apparent age and gender.
+Composition: ${composition}
+One person only, centred, with a small margin around them. Background: one flat, evenly lit solid magenta (#FF00FF) — nothing else behind or around them: no floor, shadow, gradient, confetti, frame, text, logo or watermark. Keep the magenta out of the character's lighting.
 
-STYLE — match image 2 exactly:
-a high-end 3D animated feature-film character (Pixar-like), not a flat cartoon, not a sticker, not a photo. Soft subsurface-scattered skin with a matte, clay-like finish and a subtle warm blush; slightly enlarged warm, expressive eyes with catchlights; hair sculpted in smooth soft clumps with gentle highlights; rounded but true-to-life adult proportions — keep wrinkles, laugh lines and grey hair, rendered gently. Soft warm studio key light from the front-left, gentle fill, faint rim light; warm, slightly muted palette; clothes in soft matte cotton. Expression calm and kind with a small smile unless the pose says otherwise.
-
-TONE: dignified and flattering for adults over 40. Never childish or chibi, never exaggerated or caricatured, never mocking their body size, never sexualised.
-
-COMPOSITION: ${composition}
-One person only, centred, with a small margin around them. Transparent background — no backdrop, floor, shadow, confetti, frame, text, logo or watermark.`;
+Tone: dignified and flattering for adults over 40. Never childish or chibi, never exaggerated or caricatured, never mocking body size, never sexualised.`;
 }
 
 export const STAGE_BODIES: Record<number, { name: string; body: string }> = {

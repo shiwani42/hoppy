@@ -40,7 +40,7 @@ export type ImageRef = { bytes: Buffer; mimeType: string };
 
 /**
  * One twin image from reference images (selfie, style reference, own twin) and a
- * prompt (lib/ai/prompts.ts > twinPrompt). Transparent PNG. Null without a key.
+ * prompt (lib/ai/prompts.ts > twinPrompt), on a flat magenta backdrop for lib/avatar/cutout.ts. Null without a key.
  */
 export async function generateTwinOpenAI(refs: ImageRef[], prompt: string, opts: { tall: boolean; portrait: boolean }): Promise<Buffer | null> {
   if (!hasKey.openai()) return null;
@@ -54,7 +54,8 @@ export async function generateTwinOpenAI(refs: ImageRef[], prompt: string, opts:
     prompt,
     size: opts.tall ? "1024x1536" : "1024x1024",
     quality: opts.portrait ? models.twinPortraitQuality : models.twinQuality,
-    background: "transparent",
+    // Opaque on purpose: transparent mode sometimes erases dark hair or clothing; we cut out the flat backdrop ourselves.
+    background: "opaque",
     output_format: "png",
     // Face likeness: an explicit setting only on the gpt-image-1 family; newer models do it by default.
     ...(model.startsWith("gpt-image-1") ? { input_fidelity: "high" as const } : {}),

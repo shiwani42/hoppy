@@ -105,8 +105,8 @@ async function tryTwin(sb: SupabaseClient, selfie: Selfie | null, ownTwin: Image
   if (!selfie) return null;
   if ((await twinBudgetLeft(sb)) <= 0) return null;
   await sb.from("ai_calls").insert({ kind: "twin" });
-  // Two input images per request: the selfie, plus the user's own portrait (or, for the first portrait, the style reference).
-  const refs: ImageRef[] = [selfie, ownTwin ?? { bytes: Buffer.from(STYLE_REF_JPEG, "base64"), mimeType: "image/jpeg" }];
+  // Two input images, the 3D one first: the user's own portrait (or, for the first portrait, the style reference), then the selfie.
+  const refs: ImageRef[] = [ownTwin ?? { bytes: Buffer.from(STYLE_REF_JPEG, "base64"), mimeType: "image/jpeg" }, selfie];
   const prompt = typeof what === "number" ? avatarPrompt(what, !!ownTwin) : posePrompt(what, !!ownTwin);
   let png: Buffer | null = null;
   try {
@@ -122,8 +122,8 @@ async function tryTwin(sb: SupabaseClient, selfie: Selfie | null, ownTwin: Image
     }
   }
   if (!png) return null;
-  // OpenAI returns a transparent background; Gemini can't, so cut it out.
-  const clear = (await isCutOut(png)) ? png : await cutout(png);
+  // Both models paint a flat magenta backdrop (lib/ai/prompts.ts); cut it out here.
+  const clear = (await isCutOut(png)) ? png : await cutout(png, 70);
   // A 1024px PNG is ~2 MB; WebP with alpha at phone size is a few hundred KB.
   const body = await sharp(clear).resize({ width: 768, height: 1152, fit: "inside", withoutEnlargement: true }).webp({ quality: 86, alphaQuality: 90 }).toBuffer();
   return { body, type: "image/webp", ext: "webp", placeholder: false };

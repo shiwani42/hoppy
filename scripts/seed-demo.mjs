@@ -4,7 +4,7 @@
 //
 //   node scripts/seed-demo.mjs --user <uuid>
 import { createClient } from "@supabase/supabase-js";
-import { readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 
 const env = Object.fromEntries(
   readFileSync(new URL("../.env.local", import.meta.url), "utf8")
@@ -90,14 +90,42 @@ must(
   }),
 );
 
-const stages = { 1: "demo/pose-reach.png", 2: "demo/pose-stand.png", 3: "demo/pose-namaste.png", 4: "demo/pose-namaste.png", 5: "demo/pose-reach.png" };
-for (const [n, file] of Object.entries(stages)) {
-  await upload(`${userId}/stage-${n}.png`, file, "image/png");
-  must(await sb.from("avatar_stages").upsert({ user_id: userId, stage: Number(n), image_path: `${userId}/stage-${n}.png`, is_placeholder: false }));
+// Twin art: the set made by scripts/make-demo-twins.mjs when present, else crops from the mockups.
+async function uploadTwin(uid, person) {
+  const dir = new URL(`../public/art/demo/${person}/`, import.meta.url);
+  const made = existsSync(new URL("bust.webp", dir)) ? readdirSync(dir).filter((f) => f.endsWith(".webp")) : null;
+  if (made) {
+    for (const f of made) {
+      const name = f.replace(".webp", "");
+      const path = `${uid}/${name.startsWith("stage-") ? name : `pose-${name}`}.webp`;
+      await upload(path, `demo/${person}/${f}`, "image/webp");
+      if (name.startsWith("stage-")) must(await sb.from("avatar_stages").upsert({ user_id: uid, stage: Number(name.slice(6)), image_path: path, is_placeholder: false }));
+      else must(await sb.from("avatar_poses").upsert({ user_id: uid, pose: name, image_path: path }));
+    }
+    return true;
+  }
+  return false;
 }
-for (const pose of ["bust", "drink", "stretch", "wave"]) {
-  await upload(`${userId}/pose-${pose}.png`, `demo/${pose}.png`, "image/png");
-  must(await sb.from("avatar_poses").upsert({ user_id: userId, pose, image_path: `${userId}/pose-${pose}.png` }));
+
+// A selfie on file: Home and settings expect one (scripts/make-art.mjs demo makes it).
+const selfie = new URL("./demo/selfie-suresh.jpg", import.meta.url);
+if (existsSync(selfie)) {
+  must(await sb.storage.from("selfies").upload(`${userId}/selfie.jpg`, readFileSync(selfie), { contentType: "image/jpeg", upsert: true }));
+} else {
+  must(await sb.storage.from("selfies").upload(`${userId}/selfie.jpg`, readFileSync(new URL("../public/art/demo/bust.png", import.meta.url)), { contentType: "image/png", upsert: true }));
+}
+must(await sb.from("profiles").update({ selfie_path: `${userId}/selfie.jpg` }).eq("user_id", userId));
+
+if (!(await uploadTwin(userId, "suresh"))) {
+  const stages = { 1: "demo/pose-reach.png", 2: "demo/pose-stand.png", 3: "demo/pose-namaste.png", 4: "demo/pose-namaste.png", 5: "demo/pose-reach.png" };
+  for (const [n, file] of Object.entries(stages)) {
+    await upload(`${userId}/stage-${n}.png`, file, "image/png");
+    must(await sb.from("avatar_stages").upsert({ user_id: userId, stage: Number(n), image_path: `${userId}/stage-${n}.png`, is_placeholder: false }));
+  }
+  for (const pose of ["bust", "drink", "stretch", "wave"]) {
+    await upload(`${userId}/pose-${pose}.png`, `demo/${pose}.png`, "image/png");
+    must(await sb.from("avatar_poses").upsert({ user_id: userId, pose, image_path: `${userId}/pose-${pose}.png` }));
+  }
 }
 
 // 31 past days: strong most days, 12 strong since the stage-up 18 days ago (60% to In Rhythm).
@@ -143,6 +171,7 @@ for (const f of FRIENDS) {
   if (!u) u = must(await sb.auth.admin.createUser({ email, password: crypto.randomUUID(), email_confirm: true })).user;
   must(await sb.from("profiles").upsert({ user_id: u.id, name: f.name, sex: f.sex, current_stage: f.stage }));
   await wipe(u.id);
+  await uploadTwin(u.id, f.name.split(" ")[0].toLowerCase());
   await snapshots(u.id, 7, (i) => i <= f.strong, 75, 74);
   for (let d = f.streak - 1; d >= 0; d--) await meal(u.id, at(d, 13, 0), "lunch", [item("dal-tadka", 1), item("roti", 2)]);
   must(await sb.from("friendships").upsert([{ user_id: userId, friend_id: u.id }, { user_id: u.id, friend_id: userId }]));
