@@ -1,7 +1,9 @@
 import "server-only";
 import { GoogleGenAI } from "@google/genai";
 import { hasKey, models } from "./config";
+import { z } from "zod";
 import { avatarPrompt } from "./prompts";
+import { AiMeal, type AiMealT } from "./schemas";
 
 let client: GoogleGenAI | null = null;
 function gemini() {
@@ -36,4 +38,29 @@ export async function generateAvatarImage(
     bytes: Buffer.from(part.inlineData.data, "base64"),
     mimeType: part.inlineData.mimeType ?? "image/png",
   };
+}
+
+/** Structured JSON from Gemini Flash for an inline file (photo or audio) plus a prompt. */
+export async function geminiJson<T extends z.ZodType>(
+  schema: T,
+  file: { bytes: Buffer; mimeType: string },
+  prompt: string,
+): Promise<z.infer<T> | null> {
+  if (!hasKey.gemini()) return null;
+  const res = await gemini().models.generateContent({
+    model: models.voice,
+    contents: [
+      {
+        role: "user",
+        parts: [{ inlineData: { mimeType: file.mimeType, data: file.bytes.toString("base64") } }, { text: prompt }],
+      },
+    ],
+    config: { responseMimeType: "application/json", responseJsonSchema: z.toJSONSchema(schema) },
+  });
+  return schema.parse(JSON.parse(res.text ?? "null"));
+}
+
+/** Backup meal-photo reader when OpenAI fails or is rate-limited (spec.md > Important Failure Modes). */
+export async function analyzeMealPhotoGemini(image: Buffer, mimeType: string, prompt: string): Promise<AiMealT | null> {
+  return geminiJson(AiMeal, { bytes: image, mimeType }, prompt);
 }

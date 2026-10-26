@@ -16,6 +16,8 @@ npx supabase status       # copy API URL, anon key and service role key into .en
 npm run dev               # http://localhost:3000
 ```
 
+> **Heads up:** variables exported by your shell (e.g. an `OPENAI_API_KEY` in `~/.bashrc`) take precedence over `.env.local`. Remove or update them, or start with `env -u OPENAI_API_KEY npm run dev`.
+
 AI keys are optional. With `OPENAI_API_KEY`, `GEMINI_API_KEY` or `GLM_API_KEY` blank, that provider's features use clearly labeled demo responses, so every flow still works end to end.
 
 ### Try it on your phone (same Wi-Fi)

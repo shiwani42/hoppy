@@ -1,0 +1,1265 @@
+{
+ "_note": "Approximate per-100 g values for home-style cooked dishes, compiled from IFCT 2017 (ICMR-NIN) ingredient data and common Indian recipe calculations. Used to anchor AI estimates and for manual search; verify before clinical use.",
+ "units": {
+  "roti": "roti",
+  "paratha": "paratha",
+  "naan": "naan",
+  "puri": "puri",
+  "katori": "katori (bowl, ~150 ml)",
+  "plate": "plate",
+  "piece": "piece",
+  "dosa": "dosa",
+  "egg": "egg",
+  "omelette": "omelette",
+  "cup": "cup",
+  "glass": "glass",
+  "slice": "slice",
+  "handful": "handful"
+ },
+ "foods": [
+  {
+   "id": "roti",
+   "name": "Roti / chapati",
+   "aliases": [
+    "chapati",
+    "phulka",
+    "fulka",
+    "rotli"
+   ],
+   "unit": "roti",
+   "unitGrams": 40.0,
+   "per100g": {
+    "kcal": 264.0,
+    "protein_g": 8.7,
+    "fiber_g": 4.4,
+    "carbs_g": 50.0,
+    "fat_g": 3.7,
+    "sodium_mg": 300.0
+   },
+   "sticker": "🫓"
+  },
+  {
+   "id": "paratha",
+   "name": "Plain paratha",
+   "aliases": [
+    "parantha"
+   ],
+   "unit": "paratha",
+   "unitGrams": 70.0,
+   "per100g": {
+    "kcal": 320.0,
+    "protein_g": 7.5,
+    "fiber_g": 3.5,
+    "carbs_g": 45.0,
+    "fat_g": 13.0,
+    "sodium_mg": 350.0
+   },
+   "sticker": "🫓"
+  },
+  {
+   "id": "aloo-paratha",
+   "name": "Aloo paratha",
+   "aliases": [
+    "potato paratha"
+   ],
+   "unit": "paratha",
+   "unitGrams": 100.0,
+   "per100g": {
+    "kcal": 290.0,
+    "protein_g": 6.0,
+    "fiber_g": 3.0,
+    "carbs_g": 40.0,
+    "fat_g": 12.0,
+    "sodium_mg": 400.0
+   },
+   "sticker": "🫓"
+  },
+  {
+   "id": "naan",
+   "name": "Naan",
+   "aliases": [
+    "butter naan"
+   ],
+   "unit": "naan",
+   "unitGrams": 90.0,
+   "per100g": {
+    "kcal": 290.0,
+    "protein_g": 9.0,
+    "fiber_g": 2.0,
+    "carbs_g": 50.0,
+    "fat_g": 6.0,
+    "sodium_mg": 450.0
+   },
+   "sticker": "🫓"
+  },
+  {
+   "id": "puri",
+   "name": "Puri",
+   "aliases": [
+    "poori"
+   ],
+   "unit": "puri",
+   "unitGrams": 25.0,
+   "per100g": {
+    "kcal": 380.0,
+    "protein_g": 7.0,
+    "fiber_g": 2.5,
+    "carbs_g": 45.0,
+    "fat_g": 19.0,
+    "sodium_mg": 300.0
+   },
+   "sticker": "🫓"
+  },
+  {
+   "id": "rice",
+   "name": "Steamed rice",
+   "aliases": [
+    "chawal",
+    "plain rice",
+    "white rice",
+    "bhat"
+   ],
+   "unit": "katori",
+   "unitGrams": 150.0,
+   "per100g": {
+    "kcal": 130.0,
+    "protein_g": 2.7,
+    "fiber_g": 0.4,
+    "carbs_g": 28.0,
+    "fat_g": 0.3,
+    "sodium_mg": 1.0
+   },
+   "sticker": "🍚"
+  },
+  {
+   "id": "brown-rice",
+   "name": "Brown rice",
+   "aliases": [],
+   "unit": "katori",
+   "unitGrams": 150.0,
+   "per100g": {
+    "kcal": 123.0,
+    "protein_g": 2.7,
+    "fiber_g": 1.6,
+    "carbs_g": 26.0,
+    "fat_g": 1.0,
+    "sodium_mg": 2.0
+   },
+   "sticker": "🍚"
+  },
+  {
+   "id": "jeera-rice",
+   "name": "Jeera rice",
+   "aliases": [
+    "cumin rice"
+   ],
+   "unit": "katori",
+   "unitGrams": 150.0,
+   "per100g": {
+    "kcal": 160.0,
+    "protein_g": 3.0,
+    "fiber_g": 0.6,
+    "carbs_g": 28.0,
+    "fat_g": 4.0,
+    "sodium_mg": 250.0
+   },
+   "sticker": "🍚"
+  },
+  {
+   "id": "veg-biryani",
+   "name": "Veg biryani",
+   "aliases": [
+    "veg pulao",
+    "pulao"
+   ],
+   "unit": "plate",
+   "unitGrams": 250.0,
+   "per100g": {
+    "kcal": 170.0,
+    "protein_g": 4.0,
+    "fiber_g": 1.8,
+    "carbs_g": 26.0,
+    "fat_g": 5.5,
+    "sodium_mg": 380.0
+   },
+   "sticker": "🍛"
+  },
+  {
+   "id": "chicken-biryani",
+   "name": "Chicken biryani",
+   "aliases": [
+    "biryani"
+   ],
+   "unit": "plate",
+   "unitGrams": 300.0,
+   "per100g": {
+    "kcal": 190.0,
+    "protein_g": 9.0,
+    "fiber_g": 1.0,
+    "carbs_g": 22.0,
+    "fat_g": 7.0,
+    "sodium_mg": 420.0
+   },
+   "sticker": "🍛"
+  },
+  {
+   "id": "khichdi",
+   "name": "Khichdi",
+   "aliases": [
+    "khichri"
+   ],
+   "unit": "katori",
+   "unitGrams": 250.0,
+   "per100g": {
+    "kcal": 120.0,
+    "protein_g": 4.5,
+    "fiber_g": 2.2,
+    "carbs_g": 20.0,
+    "fat_g": 3.0,
+    "sodium_mg": 300.0
+   },
+   "sticker": "🥣"
+  },
+  {
+   "id": "dal-tadka",
+   "name": "Dal tadka",
+   "aliases": [
+    "dal",
+    "daal",
+    "dal fry",
+    "yellow dal",
+    "toor dal",
+    "moong dal"
+   ],
+   "unit": "katori",
+   "unitGrams": 150.0,
+   "per100g": {
+    "kcal": 120.0,
+    "protein_g": 6.5,
+    "fiber_g": 3.5,
+    "carbs_g": 15.0,
+    "fat_g": 4.0,
+    "sodium_mg": 330.0
+   },
+   "sticker": "🥣"
+  },
+  {
+   "id": "dal-makhani",
+   "name": "Dal makhani",
+   "aliases": [
+    "maa ki dal"
+   ],
+   "unit": "katori",
+   "unitGrams": 150.0,
+   "per100g": {
+    "kcal": 155.0,
+    "protein_g": 6.5,
+    "fiber_g": 4.0,
+    "carbs_g": 15.0,
+    "fat_g": 8.0,
+    "sodium_mg": 360.0
+   },
+   "sticker": "🥣"
+  },
+  {
+   "id": "chana-masala",
+   "name": "Chana masala",
+   "aliases": [
+    "chole",
+    "chickpea curry"
+   ],
+   "unit": "katori",
+   "unitGrams": 150.0,
+   "per100g": {
+    "kcal": 165.0,
+    "protein_g": 7.5,
+    "fiber_g": 6.5,
+    "carbs_g": 20.0,
+    "fat_g": 6.0,
+    "sodium_mg": 380.0
+   },
+   "sticker": "🥣"
+  },
+  {
+   "id": "rajma",
+   "name": "Rajma",
+   "aliases": [
+    "kidney beans"
+   ],
+   "unit": "katori",
+   "unitGrams": 150.0,
+   "per100g": {
+    "kcal": 140.0,
+    "protein_g": 7.0,
+    "fiber_g": 6.0,
+    "carbs_g": 18.0,
+    "fat_g": 4.5,
+    "sodium_mg": 350.0
+   },
+   "sticker": "🥣"
+  },
+  {
+   "id": "sambar",
+   "name": "Sambar",
+   "aliases": [
+    "sambhar"
+   ],
+   "unit": "katori",
+   "unitGrams": 150.0,
+   "per100g": {
+    "kcal": 70.0,
+    "protein_g": 3.2,
+    "fiber_g": 2.5,
+    "carbs_g": 9.0,
+    "fat_g": 2.5,
+    "sodium_mg": 330.0
+   },
+   "sticker": "🥣"
+  },
+  {
+   "id": "rasam",
+   "name": "Rasam",
+   "aliases": [],
+   "unit": "katori",
+   "unitGrams": 150.0,
+   "per100g": {
+    "kcal": 35.0,
+    "protein_g": 1.2,
+    "fiber_g": 0.8,
+    "carbs_g": 5.0,
+    "fat_g": 1.0,
+    "sodium_mg": 300.0
+   },
+   "sticker": "🥣"
+  },
+  {
+   "id": "kadhi",
+   "name": "Kadhi",
+   "aliases": [
+    "kadhi pakora"
+   ],
+   "unit": "katori",
+   "unitGrams": 150.0,
+   "per100g": {
+    "kcal": 90.0,
+    "protein_g": 3.5,
+    "fiber_g": 0.8,
+    "carbs_g": 8.0,
+    "fat_g": 5.0,
+    "sodium_mg": 330.0
+   },
+   "sticker": "🥣"
+  },
+  {
+   "id": "idli",
+   "name": "Idli",
+   "aliases": [],
+   "unit": "piece",
+   "unitGrams": 40.0,
+   "per100g": {
+    "kcal": 135.0,
+    "protein_g": 4.2,
+    "fiber_g": 1.5,
+    "carbs_g": 28.0,
+    "fat_g": 0.6,
+    "sodium_mg": 270.0
+   },
+   "sticker": "🍥"
+  },
+  {
+   "id": "dosa",
+   "name": "Plain dosa",
+   "aliases": [
+    "dosai"
+   ],
+   "unit": "dosa",
+   "unitGrams": 90.0,
+   "per100g": {
+    "kcal": 165.0,
+    "protein_g": 4.0,
+    "fiber_g": 1.3,
+    "carbs_g": 27.0,
+    "fat_g": 4.5,
+    "sodium_mg": 280.0
+   },
+   "sticker": "🌯"
+  },
+  {
+   "id": "masala-dosa",
+   "name": "Masala dosa",
+   "aliases": [],
+   "unit": "dosa",
+   "unitGrams": 180.0,
+   "per100g": {
+    "kcal": 190.0,
+    "protein_g": 4.5,
+    "fiber_g": 2.2,
+    "carbs_g": 28.0,
+    "fat_g": 7.0,
+    "sodium_mg": 330.0
+   },
+   "sticker": "🌯"
+  },
+  {
+   "id": "uttapam",
+   "name": "Uttapam",
+   "aliases": [
+    "uthappam"
+   ],
+   "unit": "piece",
+   "unitGrams": 150.0,
+   "per100g": {
+    "kcal": 165.0,
+    "protein_g": 4.5,
+    "fiber_g": 2.0,
+    "carbs_g": 26.0,
+    "fat_g": 4.8,
+    "sodium_mg": 300.0
+   },
+   "sticker": "🥞"
+  },
+  {
+   "id": "medu-vada",
+   "name": "Medu vada",
+   "aliases": [
+    "vada",
+    "vadai"
+   ],
+   "unit": "piece",
+   "unitGrams": 50.0,
+   "per100g": {
+    "kcal": 300.0,
+    "protein_g": 9.0,
+    "fiber_g": 4.0,
+    "carbs_g": 30.0,
+    "fat_g": 16.0,
+    "sodium_mg": 350.0
+   },
+   "sticker": "🍩"
+  },
+  {
+   "id": "upma",
+   "name": "Upma",
+   "aliases": [
+    "rava upma"
+   ],
+   "unit": "plate",
+   "unitGrams": 200.0,
+   "per100g": {
+    "kcal": 140.0,
+    "protein_g": 3.5,
+    "fiber_g": 2.0,
+    "carbs_g": 20.0,
+    "fat_g": 5.0,
+    "sodium_mg": 330.0
+   },
+   "sticker": "🥣"
+  },
+  {
+   "id": "poha",
+   "name": "Poha",
+   "aliases": [
+    "aval",
+    "chivda poha"
+   ],
+   "unit": "plate",
+   "unitGrams": 200.0,
+   "per100g": {
+    "kcal": 130.0,
+    "protein_g": 2.6,
+    "fiber_g": 1.5,
+    "carbs_g": 22.0,
+    "fat_g": 3.8,
+    "sodium_mg": 280.0
+   },
+   "sticker": "🍚"
+  },
+  {
+   "id": "moong-chilla",
+   "name": "Moong dal chilla",
+   "aliases": [
+    "cheela",
+    "pesarattu"
+   ],
+   "unit": "piece",
+   "unitGrams": 100.0,
+   "per100g": {
+    "kcal": 160.0,
+    "protein_g": 9.0,
+    "fiber_g": 3.5,
+    "carbs_g": 20.0,
+    "fat_g": 5.0,
+    "sodium_mg": 280.0
+   },
+   "sticker": "🥞"
+  },
+  {
+   "id": "dhokla",
+   "name": "Dhokla",
+   "aliases": [
+    "khaman"
+   ],
+   "unit": "piece",
+   "unitGrams": 30.0,
+   "per100g": {
+    "kcal": 160.0,
+    "protein_g": 6.0,
+    "fiber_g": 1.5,
+    "carbs_g": 24.0,
+    "fat_g": 4.0,
+    "sodium_mg": 450.0
+   },
+   "sticker": "🧽"
+  },
+  {
+   "id": "oats",
+   "name": "Oats porridge",
+   "aliases": [
+    "oatmeal",
+    "daliya",
+    "dalia"
+   ],
+   "unit": "katori",
+   "unitGrams": 200.0,
+   "per100g": {
+    "kcal": 95.0,
+    "protein_g": 4.0,
+    "fiber_g": 1.5,
+    "carbs_g": 14.0,
+    "fat_g": 2.5,
+    "sodium_mg": 50.0
+   },
+   "sticker": "🥣"
+  },
+  {
+   "id": "bhindi",
+   "name": "Bhindi sabzi",
+   "aliases": [
+    "okra",
+    "bhindi fry"
+   ],
+   "unit": "katori",
+   "unitGrams": 120.0,
+   "per100g": {
+    "kcal": 95.0,
+    "protein_g": 2.3,
+    "fiber_g": 3.8,
+    "carbs_g": 8.0,
+    "fat_g": 6.0,
+    "sodium_mg": 280.0
+   },
+   "sticker": "🥬"
+  },
+  {
+   "id": "aloo-sabzi",
+   "name": "Aloo sabzi",
+   "aliases": [
+    "potato sabzi",
+    "aloo bhaji"
+   ],
+   "unit": "katori",
+   "unitGrams": 150.0,
+   "per100g": {
+    "kcal": 120.0,
+    "protein_g": 2.0,
+    "fiber_g": 2.2,
+    "carbs_g": 16.0,
+    "fat_g": 5.5,
+    "sodium_mg": 300.0
+   },
+   "sticker": "🥔"
+  },
+  {
+   "id": "aloo-gobi",
+   "name": "Aloo gobi",
+   "aliases": [
+    "gobi aloo",
+    "cauliflower sabzi"
+   ],
+   "unit": "katori",
+   "unitGrams": 150.0,
+   "per100g": {
+    "kcal": 105.0,
+    "protein_g": 2.6,
+    "fiber_g": 3.0,
+    "carbs_g": 11.0,
+    "fat_g": 6.0,
+    "sodium_mg": 310.0
+   },
+   "sticker": "🥦"
+  },
+  {
+   "id": "mixed-veg",
+   "name": "Mixed veg curry",
+   "aliases": [
+    "sabzi",
+    "veg curry",
+    "mix veg"
+   ],
+   "unit": "katori",
+   "unitGrams": 150.0,
+   "per100g": {
+    "kcal": 100.0,
+    "protein_g": 2.5,
+    "fiber_g": 3.0,
+    "carbs_g": 10.0,
+    "fat_g": 6.0,
+    "sodium_mg": 320.0
+   },
+   "sticker": "🥬"
+  },
+  {
+   "id": "baingan-bharta",
+   "name": "Baingan bharta",
+   "aliases": [
+    "brinjal",
+    "eggplant"
+   ],
+   "unit": "katori",
+   "unitGrams": 150.0,
+   "per100g": {
+    "kcal": 95.0,
+    "protein_g": 2.0,
+    "fiber_g": 3.5,
+    "carbs_g": 8.0,
+    "fat_g": 6.5,
+    "sodium_mg": 300.0
+   },
+   "sticker": "🍆"
+  },
+  {
+   "id": "palak-paneer",
+   "name": "Palak paneer",
+   "aliases": [
+    "saag paneer"
+   ],
+   "unit": "katori",
+   "unitGrams": 150.0,
+   "per100g": {
+    "kcal": 165.0,
+    "protein_g": 8.0,
+    "fiber_g": 2.5,
+    "carbs_g": 6.0,
+    "fat_g": 12.0,
+    "sodium_mg": 350.0
+   },
+   "sticker": "🥬"
+  },
+  {
+   "id": "paneer-butter-masala",
+   "name": "Paneer butter masala",
+   "aliases": [
+    "paneer makhani",
+    "shahi paneer",
+    "paneer curry"
+   ],
+   "unit": "katori",
+   "unitGrams": 150.0,
+   "per100g": {
+    "kcal": 250.0,
+    "protein_g": 9.0,
+    "fiber_g": 1.5,
+    "carbs_g": 9.0,
+    "fat_g": 20.0,
+    "sodium_mg": 420.0
+   },
+   "sticker": "🧀"
+  },
+  {
+   "id": "paneer-tikka",
+   "name": "Paneer tikka",
+   "aliases": [],
+   "unit": "plate",
+   "unitGrams": 150.0,
+   "per100g": {
+    "kcal": 260.0,
+    "protein_g": 16.0,
+    "fiber_g": 1.5,
+    "carbs_g": 6.0,
+    "fat_g": 19.0,
+    "sodium_mg": 450.0
+   },
+   "sticker": "🧀"
+  },
+  {
+   "id": "chicken-curry",
+   "name": "Chicken curry",
+   "aliases": [
+    "murgh curry",
+    "chicken masala"
+   ],
+   "unit": "katori",
+   "unitGrams": 200.0,
+   "per100g": {
+    "kcal": 165.0,
+    "protein_g": 15.0,
+    "fiber_g": 0.8,
+    "carbs_g": 4.0,
+    "fat_g": 10.0,
+    "sodium_mg": 380.0
+   },
+   "sticker": "🍗"
+  },
+  {
+   "id": "butter-chicken",
+   "name": "Butter chicken",
+   "aliases": [
+    "murgh makhani"
+   ],
+   "unit": "katori",
+   "unitGrams": 200.0,
+   "per100g": {
+    "kcal": 220.0,
+    "protein_g": 14.0,
+    "fiber_g": 0.8,
+    "carbs_g": 6.0,
+    "fat_g": 15.0,
+    "sodium_mg": 420.0
+   },
+   "sticker": "🍗"
+  },
+  {
+   "id": "tandoori-chicken",
+   "name": "Tandoori chicken",
+   "aliases": [
+    "chicken tikka"
+   ],
+   "unit": "piece",
+   "unitGrams": 75.0,
+   "per100g": {
+    "kcal": 165.0,
+    "protein_g": 25.0,
+    "fiber_g": 0.5,
+    "carbs_g": 3.0,
+    "fat_g": 6.0,
+    "sodium_mg": 520.0
+   },
+   "sticker": "🍗"
+  },
+  {
+   "id": "fish-curry",
+   "name": "Fish curry",
+   "aliases": [
+    "machli",
+    "meen curry"
+   ],
+   "unit": "katori",
+   "unitGrams": 200.0,
+   "per100g": {
+    "kcal": 140.0,
+    "protein_g": 14.0,
+    "fiber_g": 0.8,
+    "carbs_g": 4.0,
+    "fat_g": 7.5,
+    "sodium_mg": 380.0
+   },
+   "sticker": "🐟"
+  },
+  {
+   "id": "mutton-curry",
+   "name": "Mutton curry",
+   "aliases": [
+    "gosht",
+    "lamb curry"
+   ],
+   "unit": "katori",
+   "unitGrams": 200.0,
+   "per100g": {
+    "kcal": 210.0,
+    "protein_g": 16.0,
+    "fiber_g": 0.6,
+    "carbs_g": 3.5,
+    "fat_g": 15.0,
+    "sodium_mg": 400.0
+   },
+   "sticker": "🍖"
+  },
+  {
+   "id": "egg-curry",
+   "name": "Egg curry",
+   "aliases": [
+    "anda curry"
+   ],
+   "unit": "katori",
+   "unitGrams": 200.0,
+   "per100g": {
+    "kcal": 155.0,
+    "protein_g": 9.0,
+    "fiber_g": 1.0,
+    "carbs_g": 5.0,
+    "fat_g": 11.0,
+    "sodium_mg": 350.0
+   },
+   "sticker": "🥚"
+  },
+  {
+   "id": "boiled-egg",
+   "name": "Boiled egg",
+   "aliases": [
+    "egg",
+    "anda"
+   ],
+   "unit": "egg",
+   "unitGrams": 50.0,
+   "per100g": {
+    "kcal": 155.0,
+    "protein_g": 12.6,
+    "fiber_g": 0.0,
+    "carbs_g": 1.1,
+    "fat_g": 10.6,
+    "sodium_mg": 124.0
+   },
+   "sticker": "🥚"
+  },
+  {
+   "id": "omelette",
+   "name": "Omelette",
+   "aliases": [
+    "anda omelette",
+    "masala omelette"
+   ],
+   "unit": "omelette",
+   "unitGrams": 120.0,
+   "per100g": {
+    "kcal": 175.0,
+    "protein_g": 11.5,
+    "fiber_g": 0.3,
+    "carbs_g": 1.5,
+    "fat_g": 13.5,
+    "sodium_mg": 320.0
+   },
+   "sticker": "🍳"
+  },
+  {
+   "id": "curd",
+   "name": "Curd",
+   "aliases": [
+    "dahi",
+    "yogurt"
+   ],
+   "unit": "katori",
+   "unitGrams": 100.0,
+   "per100g": {
+    "kcal": 60.0,
+    "protein_g": 3.1,
+    "fiber_g": 0.0,
+    "carbs_g": 4.7,
+    "fat_g": 3.3,
+    "sodium_mg": 46.0
+   },
+   "sticker": "🥛"
+  },
+  {
+   "id": "raita",
+   "name": "Raita",
+   "aliases": [
+    "boondi raita"
+   ],
+   "unit": "katori",
+   "unitGrams": 120.0,
+   "per100g": {
+    "kcal": 70.0,
+    "protein_g": 3.0,
+    "fiber_g": 0.8,
+    "carbs_g": 6.0,
+    "fat_g": 3.5,
+    "sodium_mg": 250.0
+   },
+   "sticker": "🥛"
+  },
+  {
+   "id": "salad",
+   "name": "Kachumber salad",
+   "aliases": [
+    "salad",
+    "cucumber",
+    "green salad"
+   ],
+   "unit": "katori",
+   "unitGrams": 100.0,
+   "per100g": {
+    "kcal": 25.0,
+    "protein_g": 1.0,
+    "fiber_g": 1.8,
+    "carbs_g": 5.0,
+    "fat_g": 0.2,
+    "sodium_mg": 120.0
+   },
+   "sticker": "🥗"
+  },
+  {
+   "id": "sprouts",
+   "name": "Sprouts salad",
+   "aliases": [
+    "moong sprouts"
+   ],
+   "unit": "katori",
+   "unitGrams": 100.0,
+   "per100g": {
+    "kcal": 105.0,
+    "protein_g": 7.0,
+    "fiber_g": 4.5,
+    "carbs_g": 15.0,
+    "fat_g": 1.5,
+    "sodium_mg": 150.0
+   },
+   "sticker": "🌱"
+  },
+  {
+   "id": "chai",
+   "name": "Masala chai",
+   "aliases": [
+    "tea",
+    "chai",
+    "cutting chai"
+   ],
+   "unit": "cup",
+   "unitGrams": 150.0,
+   "per100g": {
+    "kcal": 60.0,
+    "protein_g": 2.0,
+    "fiber_g": 0.0,
+    "carbs_g": 8.0,
+    "fat_g": 2.0,
+    "sodium_mg": 30.0
+   },
+   "sticker": "☕"
+  },
+  {
+   "id": "coffee",
+   "name": "Coffee with milk",
+   "aliases": [
+    "filter coffee"
+   ],
+   "unit": "cup",
+   "unitGrams": 150.0,
+   "per100g": {
+    "kcal": 55.0,
+    "protein_g": 2.0,
+    "fiber_g": 0.0,
+    "carbs_g": 6.0,
+    "fat_g": 2.0,
+    "sodium_mg": 30.0
+   },
+   "sticker": "☕"
+  },
+  {
+   "id": "milk",
+   "name": "Milk",
+   "aliases": [
+    "doodh"
+   ],
+   "unit": "glass",
+   "unitGrams": 250.0,
+   "per100g": {
+    "kcal": 62.0,
+    "protein_g": 3.2,
+    "fiber_g": 0.0,
+    "carbs_g": 4.8,
+    "fat_g": 3.3,
+    "sodium_mg": 44.0
+   },
+   "sticker": "🥛"
+  },
+  {
+   "id": "lassi",
+   "name": "Sweet lassi",
+   "aliases": [
+    "lassi"
+   ],
+   "unit": "glass",
+   "unitGrams": 250.0,
+   "per100g": {
+    "kcal": 95.0,
+    "protein_g": 3.0,
+    "fiber_g": 0.0,
+    "carbs_g": 15.0,
+    "fat_g": 2.5,
+    "sodium_mg": 45.0
+   },
+   "sticker": "🥛"
+  },
+  {
+   "id": "chaas",
+   "name": "Buttermilk",
+   "aliases": [
+    "chaas",
+    "chhach",
+    "mattha"
+   ],
+   "unit": "glass",
+   "unitGrams": 250.0,
+   "per100g": {
+    "kcal": 20.0,
+    "protein_g": 1.2,
+    "fiber_g": 0.0,
+    "carbs_g": 2.0,
+    "fat_g": 0.6,
+    "sodium_mg": 180.0
+   },
+   "sticker": "🥛"
+  },
+  {
+   "id": "samosa",
+   "name": "Samosa",
+   "aliases": [],
+   "unit": "piece",
+   "unitGrams": 70.0,
+   "per100g": {
+    "kcal": 310.0,
+    "protein_g": 5.0,
+    "fiber_g": 3.0,
+    "carbs_g": 32.0,
+    "fat_g": 18.0,
+    "sodium_mg": 420.0
+   },
+   "sticker": "🥟"
+  },
+  {
+   "id": "pakora",
+   "name": "Pakora",
+   "aliases": [
+    "pakoda",
+    "bhajji",
+    "bhaji"
+   ],
+   "unit": "plate",
+   "unitGrams": 100.0,
+   "per100g": {
+    "kcal": 300.0,
+    "protein_g": 8.0,
+    "fiber_g": 4.0,
+    "carbs_g": 28.0,
+    "fat_g": 18.0,
+    "sodium_mg": 450.0
+   },
+   "sticker": "🍤"
+  },
+  {
+   "id": "pav-bhaji",
+   "name": "Pav bhaji",
+   "aliases": [],
+   "unit": "plate",
+   "unitGrams": 300.0,
+   "per100g": {
+    "kcal": 180.0,
+    "protein_g": 4.5,
+    "fiber_g": 3.0,
+    "carbs_g": 25.0,
+    "fat_g": 7.0,
+    "sodium_mg": 480.0
+   },
+   "sticker": "🍛"
+  },
+  {
+   "id": "chole-bhature",
+   "name": "Chole bhature",
+   "aliases": [],
+   "unit": "plate",
+   "unitGrams": 300.0,
+   "per100g": {
+    "kcal": 280.0,
+    "protein_g": 7.5,
+    "fiber_g": 4.5,
+    "carbs_g": 33.0,
+    "fat_g": 13.0,
+    "sodium_mg": 500.0
+   },
+   "sticker": "🍛"
+  },
+  {
+   "id": "bread",
+   "name": "Bread slice",
+   "aliases": [
+    "toast"
+   ],
+   "unit": "slice",
+   "unitGrams": 25.0,
+   "per100g": {
+    "kcal": 265.0,
+    "protein_g": 9.0,
+    "fiber_g": 2.7,
+    "carbs_g": 49.0,
+    "fat_g": 3.2,
+    "sodium_mg": 490.0
+   },
+   "sticker": "🍞"
+  },
+  {
+   "id": "noodles",
+   "name": "Instant noodles",
+   "aliases": [
+    "maggi"
+   ],
+   "unit": "plate",
+   "unitGrams": 200.0,
+   "per100g": {
+    "kcal": 140.0,
+    "protein_g": 3.0,
+    "fiber_g": 1.0,
+    "carbs_g": 20.0,
+    "fat_g": 5.0,
+    "sodium_mg": 600.0
+   },
+   "sticker": "🍜"
+  },
+  {
+   "id": "gulab-jamun",
+   "name": "Gulab jamun",
+   "aliases": [],
+   "unit": "piece",
+   "unitGrams": 40.0,
+   "per100g": {
+    "kcal": 330.0,
+    "protein_g": 4.5,
+    "fiber_g": 0.5,
+    "carbs_g": 52.0,
+    "fat_g": 12.0,
+    "sodium_mg": 70.0
+   },
+   "sticker": "🍬"
+  },
+  {
+   "id": "jalebi",
+   "name": "Jalebi",
+   "aliases": [],
+   "unit": "piece",
+   "unitGrams": 50.0,
+   "per100g": {
+    "kcal": 400.0,
+    "protein_g": 2.5,
+    "fiber_g": 0.3,
+    "carbs_g": 65.0,
+    "fat_g": 15.0,
+    "sodium_mg": 20.0
+   },
+   "sticker": "🍬"
+  },
+  {
+   "id": "kheer",
+   "name": "Kheer",
+   "aliases": [
+    "payasam"
+   ],
+   "unit": "katori",
+   "unitGrams": 150.0,
+   "per100g": {
+    "kcal": 140.0,
+    "protein_g": 3.8,
+    "fiber_g": 0.3,
+    "carbs_g": 21.0,
+    "fat_g": 4.5,
+    "sodium_mg": 50.0
+   },
+   "sticker": "🍮"
+  },
+  {
+   "id": "banana",
+   "name": "Banana",
+   "aliases": [
+    "kela"
+   ],
+   "unit": "piece",
+   "unitGrams": 120.0,
+   "per100g": {
+    "kcal": 89.0,
+    "protein_g": 1.1,
+    "fiber_g": 2.6,
+    "carbs_g": 23.0,
+    "fat_g": 0.3,
+    "sodium_mg": 1.0
+   },
+   "sticker": "🍌"
+  },
+  {
+   "id": "apple",
+   "name": "Apple",
+   "aliases": [
+    "seb"
+   ],
+   "unit": "piece",
+   "unitGrams": 150.0,
+   "per100g": {
+    "kcal": 52.0,
+    "protein_g": 0.3,
+    "fiber_g": 2.4,
+    "carbs_g": 14.0,
+    "fat_g": 0.2,
+    "sodium_mg": 1.0
+   },
+   "sticker": "🍎"
+  },
+  {
+   "id": "mango",
+   "name": "Mango",
+   "aliases": [
+    "aam"
+   ],
+   "unit": "piece",
+   "unitGrams": 150.0,
+   "per100g": {
+    "kcal": 60.0,
+    "protein_g": 0.8,
+    "fiber_g": 1.6,
+    "carbs_g": 15.0,
+    "fat_g": 0.4,
+    "sodium_mg": 1.0
+   },
+   "sticker": "🥭"
+  },
+  {
+   "id": "papaya",
+   "name": "Papaya",
+   "aliases": [
+    "papita"
+   ],
+   "unit": "katori",
+   "unitGrams": 150.0,
+   "per100g": {
+    "kcal": 43.0,
+    "protein_g": 0.5,
+    "fiber_g": 1.7,
+    "carbs_g": 11.0,
+    "fat_g": 0.3,
+    "sodium_mg": 8.0
+   },
+   "sticker": "🍈"
+  },
+  {
+   "id": "roasted-chana",
+   "name": "Roasted chana",
+   "aliases": [
+    "bhuna chana"
+   ],
+   "unit": "handful",
+   "unitGrams": 30.0,
+   "per100g": {
+    "kcal": 370.0,
+    "protein_g": 21.0,
+    "fiber_g": 17.0,
+    "carbs_g": 58.0,
+    "fat_g": 6.0,
+    "sodium_mg": 30.0
+   },
+   "sticker": "🫘"
+  },
+  {
+   "id": "peanuts",
+   "name": "Peanuts",
+   "aliases": [
+    "moongphali"
+   ],
+   "unit": "handful",
+   "unitGrams": 30.0,
+   "per100g": {
+    "kcal": 567.0,
+    "protein_g": 26.0,
+    "fiber_g": 8.5,
+    "carbs_g": 16.0,
+    "fat_g": 49.0,
+    "sodium_mg": 18.0
+   },
+   "sticker": "🥜"
+  }
+ ]
+}

@@ -19,7 +19,7 @@ Build mode: fast (learner asked to finish everything end to end locally before t
   Learner check: Open the app, take a selfie, and say whether the avatar looks like you and fits the soft-3D, non-childish style you want.
   Commit: `Selfie onboarding and stage-1 avatar`
 
-- [ ] **2. Hoppy installs as an app**
+- [x] **2. Hoppy installs as an app**
   Becomes usable: Hoppy installs from Chrome as an app with its own icon and opens without the browser bar. The app shell loads offline. A local HTTPS dev server lets your Android open it over Wi-Fi with a working camera.
   Why now: Camera, install, and push all need HTTPS. Getting the PWA shell right early means every later slice works as an installed app. (The Vercel deploy is deferred until accounts exist; see Revisions.)
   PRD ref: `prd.md > Screens and Layout`
@@ -189,3 +189,6 @@ Activity mode:
 - API routes read the user's Supabase access token from an `Authorization: Bearer` header instead of `@supabase/ssr` cookies plus `middleware.ts`. Next 16 renamed middleware to `proxy`, and all data access is client-side under row level security, so a cookie session added nothing. This is internal; the behavior is the same.
 - Hand-written `public/sw.js` instead of Serwist: `@serwist/next` hooks into webpack, but Next 16 builds with Turbopack. One small file covers the offline shell and push.
 - Nutrition targets verified: protein is 0.83 g/kg/day (ICMR-NIN RDA 2020 brief note), rising to 1 g/kg for cereal-based diets per the same document's footnote, so it's applied to veg/Jain/vegan users. Fibre is 40 g per 2,000 kcal (ICMR-NIN 2020 as reported), replacing the spec's 30 g estimate. `lib/rules/targets.ts` cites both.
+- The learner's shell (`~/.bashrc`, `~/.zshrc`) exports an `OPENAI_API_KEY` that OpenAI rejects as invalid, and Next.js lets shell variables win over `.env.local`. The build's dev server runs with that variable unset, so the app stays in keyless demo mode as requested. The README explains how to override it. A useful side effect: this exercised the "AI unavailable → search instead" fallback for real.
+- Food stickers are emoji in sticker-style tiles rather than image-model-generated art, since there's no image key yet. They can be swapped for generated stickers later without code changes beyond `data/indian-foods.json`.
+- The demo meal analysis can't actually see the photo, so the "not food" path (`is_food: false`) can only be exercised with a real vision key. It is implemented in the route and UI, and verified only through code review until a key is added.
