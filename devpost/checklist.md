@@ -149,7 +149,7 @@ Build mode: fast (learner asked to finish everything end to end locally before t
   Learner check: Open your invite link in a second browser profile, then see yourself on each other's leaderboard.
   Commit: `Friends via invite, feed, and weekly leaderboard`
 
-- [ ] **15. Find a specialist**
+- [x] **15. Find a specialist**
   Becomes usable: Browse a directory of nutritionists, dietitians, and trainers (clearly labeled sample profiles) and send a consult request with your latest report attached; you see "Request sent."
   Why now: Last; it depends on reports (slice 13).
   PRD ref: `prd.md > Specialists`
@@ -166,6 +166,12 @@ Build mode: fast (learner asked to finish everything end to end locally before t
 - [ ] Final kick-the-tires exploration and feedback completed
 
 ## Final Review
+
+Mechanical verification of the finished build (all slices):
+- `npm test`: 77 rule tests pass (targets, stats, drip, parser, chat, nudges, stages, streaks/milestones, reminders, reports).
+- `npm run build`: clean production build of 27 routes; lint and typecheck clean.
+- 19 end-to-end suites (183 checks) pass against the dev server, plus PWA install/offline checks and the core journey against the production build. The only flagged message is Chrome's own "no Push API in incognito" notice from the test profile.
+- Still to verify with real keys or devices: Gemini avatar likeness, OpenAI reading real Indian plates and `is_food: false`, Gemini Hinglish voice, GLM chat tone, and a real phone receiving a push notification.
 
 - [ ] Final review complete — feedback resolved and learner confirms ready to ship
 
