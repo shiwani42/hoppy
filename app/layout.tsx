@@ -35,7 +35,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${baloo.variable} ${mukta.variable} h-full antialiased`}>
       <body className="min-h-full">
-        <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col">{children}</div>
+        <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col print:max-w-none">{children}</div>
         <ServiceWorker />
       </body>
     </html>

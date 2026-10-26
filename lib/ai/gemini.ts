@@ -86,3 +86,10 @@ export async function transcribeLog(audio: Buffer, mimeType: string): Promise<st
   });
   return res.text?.trim() || null;
 }
+
+/** Plain text from the larger report model (spec.md > Reports — on demand, cached). */
+export async function geminiReport(prompt: string): Promise<string | null> {
+  if (!hasKey.gemini()) return null;
+  const res = await gemini().models.generateContent({ model: models.report, contents: prompt });
+  return res.text?.trim() || null;
+}

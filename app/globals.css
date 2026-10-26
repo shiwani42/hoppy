@@ -78,3 +78,18 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Reports print as a clean document (prd.md > Reports — PDF for a doctor). */
+@page {
+  size: A4;
+  margin: 14mm;
+}
+
+@media print {
+  body {
+    background: #fff;
+  }
+  section {
+    break-inside: avoid;
+  }
+}

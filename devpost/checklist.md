@@ -119,7 +119,7 @@ Build mode: fast (learner asked to finish everything end to end locally before t
   Learner check: Add a real supplement you take and check it off.
   Commit: `Medicines and supplements tracking`
 
-- [ ] **12. Settings and reminders that reach your phone**
+- [x] **12. Settings and reminders that reach your phone**
   Becomes usable: In settings you can edit everything drip onboarding collected, set meal-reminder times, regenerate your avatar, and allow notifications. At the set time, your phone gets a push in the avatar's voice ("Lunch? Snap it, or just tell me"), and tapping it opens logging. Med reminders arrive too. Without push permission, you see an in-app banner.
   Why now: Needs meds (slice 11) and the deployed HTTPS app (slice 2). Push is the trickiest infrastructure, so it's isolated in its own slice.
   PRD ref: `prd.md > Reminders`, `prd.md > Onboarding (Drip)` (editable later), `prd.md > Screens and Layout` (settings)
